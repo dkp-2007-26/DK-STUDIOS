@@ -27,6 +27,15 @@ export interface Order {
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
+  fulfillment_method: 'pickup' | 'home_delivery';
+  shipping_name: string | null;
+  shipping_phone: string | null;
+  shipping_address_line1: string | null;
+  shipping_address_line2: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_pincode: string | null;
+  shipping_country: string | null;
   instructions: string | null;
   frame_option: string | null;
   frame_size: string | null;
@@ -73,6 +82,10 @@ export interface Order {
   files_deleted_at: string | null;
   files_deletion_failed_at: string | null;
   files_deletion_error: string | null;
+  qikink_status: 'not_required' | 'queued' | 'submitted' | 'failed';
+  qikink_order_id: string | null;
+  qikink_submitted_at: string | null;
+  qikink_error: string | null;
   created_at: string;
   updated_at: string;
 }

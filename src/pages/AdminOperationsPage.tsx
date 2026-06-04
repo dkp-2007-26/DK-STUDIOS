@@ -36,6 +36,10 @@ const paymentConfig: Record<Order["payment_status"], string> = {
 const formatCurrency = (value: number) => `Rs. ${value.toLocaleString("en-IN")}`;
 const formatDate = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "Not set";
+const formatFulfillment = (order: Order) =>
+  order.delivery_type === "printed"
+    ? order.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup"
+    : "Digital";
 
 export default function AdminOperationsPage({ navigate }: AdminOperationsPageProps) {
   const { user, isAdmin, signOut } = useAuth();
@@ -223,6 +227,15 @@ function OrderRow({ order, onPatch }: { order: Order; onPatch: (orderId: string,
         </div>
         <p className="mt-2 text-sm text-stone-600">{order.customer_name} · {order.customer_email} · {formatDate(order.created_at)}</p>
         <p className="mt-1 break-all text-xs text-stone-500">Order ID: {order.id}</p>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-stone-600">
+          <span className="rounded-full border border-stone-200 bg-slate-50 px-2 py-1">{formatFulfillment(order)}</span>
+          {order.fulfillment_method === "home_delivery" && (
+            <>
+              <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-orange-800">Qikink: {order.qikink_status.replace("_", " ")}</span>
+              <span className="rounded-full border border-stone-200 bg-slate-50 px-2 py-1">{[order.shipping_city, order.shipping_state, order.shipping_pincode].filter(Boolean).join(", ")}</span>
+            </>
+          )}
+        </div>
       </div>
       <div className="flex flex-wrap gap-2">
         <select value={order.status} onChange={(event) => void onPatch(order.id, { status: event.target.value })} className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm">

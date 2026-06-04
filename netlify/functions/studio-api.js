@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { getSupabaseServiceClient, requireRazorpayEnv, requireRole, SupabaseServerError } from "../lib/supabase-server.js";
+import { createQikinkFulfillmentJob } from "../lib/qikink.js";
 import {
   captureFunctionError,
   flushGlitchTip,
@@ -46,6 +47,15 @@ function toOrder(row) {
     customer_name: row.customer_name,
     customer_email: row.customer_email,
     customer_phone: row.customer_phone,
+    fulfillment_method: row.fulfillment_method ?? "pickup",
+    shipping_name: row.shipping_name,
+    shipping_phone: row.shipping_phone,
+    shipping_address_line1: row.shipping_address_line1,
+    shipping_address_line2: row.shipping_address_line2,
+    shipping_city: row.shipping_city,
+    shipping_state: row.shipping_state,
+    shipping_pincode: row.shipping_pincode,
+    shipping_country: row.shipping_country,
     instructions: row.instructions,
     frame_option: row.frame_option,
     frame_size: row.frame_size,
@@ -92,6 +102,10 @@ function toOrder(row) {
     files_deleted_at: row.files_deleted_at,
     files_deletion_failed_at: row.files_deletion_failed_at,
     files_deletion_error: row.files_deletion_error,
+    qikink_status: row.qikink_status ?? "not_required",
+    qikink_order_id: row.qikink_order_id,
+    qikink_submitted_at: row.qikink_submitted_at,
+    qikink_error: row.qikink_error,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -245,6 +259,45 @@ function timingSafeEqualHex(left, right) {
   return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
+function normalizeFulfillment(body) {
+  const deliveryType = body.deliveryType || "digital";
+  const requested = body.fulfillmentMethod === "home_delivery" ? "home_delivery" : "pickup";
+  const fulfillmentMethod = deliveryType === "printed" ? requested : "pickup";
+  const address = body.shippingAddress && typeof body.shippingAddress === "object" ? body.shippingAddress : {};
+  if (fulfillmentMethod === "home_delivery") {
+    const required = {
+      shipping_name: String(address.name || body.customerName || "").trim(),
+      shipping_phone: String(address.phone || body.customerPhone || "").trim(),
+      shipping_address_line1: String(address.addressLine1 || "").trim(),
+      shipping_city: String(address.city || "").trim(),
+      shipping_state: String(address.state || "").trim(),
+      shipping_pincode: String(address.pincode || "").trim(),
+      shipping_country: String(address.country || "India").trim(),
+    };
+    if (Object.values(required).some((value) => !value)) {
+      throw new SupabaseServerError("Home delivery needs name, phone, address, city, state, pincode, and country.", 400);
+    }
+    return {
+      fulfillment_method: fulfillmentMethod,
+      ...required,
+      shipping_address_line2: address.addressLine2 ? String(address.addressLine2).trim() : null,
+      qikink_status: "queued",
+    };
+  }
+  return {
+    fulfillment_method: "pickup",
+    shipping_name: null,
+    shipping_phone: null,
+    shipping_address_line1: null,
+    shipping_address_line2: null,
+    shipping_city: null,
+    shipping_state: null,
+    shipping_pincode: null,
+    shipping_country: null,
+    qikink_status: "not_required",
+  };
+}
+
 async function previewPromotion(supabase, promoCode, subtotalAmount) {
   if (!promoCode) return null;
   const { data: promotion, error } = await supabase
@@ -332,6 +385,7 @@ async function createOrder(supabase, body) {
   const billNumber = makeBillNumber();
   const reviewToken = `rvw_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   const photoAssets = Array.isArray(body.photoAssets) ? body.photoAssets : [];
+  const fulfillment = normalizeFulfillment(body);
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -341,6 +395,7 @@ async function createOrder(supabase, body) {
       customer_name: body.customerName,
       customer_email: email,
       customer_phone: body.customerPhone || null,
+      ...fulfillment,
       instructions: body.instructions || null,
       frame_option: body.frameOption || null,
       frame_size: body.frameSize || null,
@@ -408,6 +463,14 @@ async function createOrder(supabase, body) {
 
   if (promo?.code) {
     await supabase.rpc("increment_promotion_use", { promo_code: promo.code }).catch(() => null);
+  }
+
+  if (order.fulfillment_method === "home_delivery") {
+    await createQikinkFulfillmentJob(supabase, order, {
+      serviceCode: body.serviceCode,
+      templateCode: body.templateCode || null,
+      photoAssets,
+    });
   }
 
   return toOrder(order);

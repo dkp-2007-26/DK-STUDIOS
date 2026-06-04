@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle, CreditCard, MessageCircle, Tag } from "lucide-react";
+import { AlertCircle, CheckCircle, CreditCard, Home, MessageCircle, PackageCheck, Store, Tag } from "lucide-react";
 import PhotoUploadStudio, { type EditablePhotoAsset } from "../components/order/PhotoUploadStudio";
 import { useAuth } from "../context/AuthContext";
 import type { Page } from "../hooks/useRouter";
@@ -52,10 +52,21 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   const [serviceId, setServiceId] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [deliveryType, setDeliveryType] = useState<"digital" | "printed">("digital");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<"pickup" | "home_delivery">("pickup");
   const [assets, setAssets] = useState<EditablePhotoAsset[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "", instructions: "", personalizationText: "" });
+  const [shipping, setShipping] = useState({
+    name: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "India",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
@@ -76,6 +87,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   }, [user]);
 
   const selectedService = services.find((service) => service.id === serviceId) ?? null;
+  const fulfillmentRequiresAddress = deliveryType === "printed" && fulfillmentMethod === "home_delivery";
   const subtotal = selectedService
     ? selectedService.base_price + (deliveryType === "printed" ? selectedService.print_price : 0)
     : 0;
@@ -103,6 +115,13 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
 
   const handleSubmit = async () => {
     if (!selectedService) return;
+    if (fulfillmentRequiresAddress) {
+      const requiredAddress = [shipping.name || form.name, shipping.phone || form.phone, shipping.addressLine1, shipping.city, shipping.state, shipping.pincode];
+      if (requiredAddress.some((value) => !value.trim())) {
+        setError("Home delivery needs name, phone, address, city, state, and pincode.");
+        return;
+      }
+    }
 
     setSubmitting(true);
     setError("");
@@ -110,6 +129,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
       addGlitchTipBreadcrumb("Customer started order submission", {
         serviceId: selectedService.id,
         deliveryType,
+        fulfillmentMethod,
         assetCount: assets.length,
         total,
       });
@@ -150,6 +170,17 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         photoNames: assets.map((asset) => asset.file.name),
         photoAssets: uploadedPhotos,
         deliveryType,
+        fulfillmentMethod: deliveryType === "printed" ? fulfillmentMethod : "pickup",
+        shippingAddress: fulfillmentRequiresAddress ? {
+          name: shipping.name || form.name,
+          phone: shipping.phone || form.phone,
+          addressLine1: shipping.addressLine1,
+          addressLine2: shipping.addressLine2 || null,
+          city: shipping.city,
+          state: shipping.state,
+          pincode: shipping.pincode,
+          country: shipping.country || "India",
+        } : null,
         subtotalAmount: subtotal,
         promoCode: appliedPromoCode || null,
         totalAmount: total,
@@ -170,6 +201,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           serviceId: selectedService.id,
           hasTemplate: Boolean(templateId),
           deliveryType,
+          fulfillmentMethod,
           assetCount: assets.length,
           hasPromo: Boolean(appliedPromoCode),
           total,
@@ -311,15 +343,18 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <Info label="Advance" value={`Rs. ${createdOrder.advance_amount}`} />
             <Info label="Balance" value={`Rs. ${Math.max(createdOrder.total_amount - createdOrder.advance_amount, 0)}`} />
             <Info label="Payment" value={paymentIsPaid ? "Paid" : "Pending"} />
+            <Info label="Fulfillment" value={createdOrder.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup"} />
           </div>
           <div className={`mt-6 rounded-lg border p-4 text-left ${paymentIsPaid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
             <p className={`text-sm font-black ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
               {paymentIsPaid ? "Payment verified" : `${PAYMENT_PROVIDER_NAME} checkout is ready`}
             </p>
             <p className={`mt-2 text-sm leading-6 ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
-              {paymentIsPaid
-                ? "Your request is now visible to the studio. The final balance is collected at delivery after the work is complete."
-                : "Pay the Rs. 49 advance using DK STUDIOS' Razorpay account. The studio receives the request only after server signature verification."}
+            {paymentIsPaid
+              ? createdOrder.fulfillment_method === "home_delivery"
+                ? "Your request is now visible to the studio. Home delivery is queued for fulfillment after the work is complete."
+                : "Your request is now visible to the studio. The final balance is collected at in-store pickup after the work is complete."
+              : "Pay the Rs. 49 advance using DK STUDIOS' Razorpay account. The studio receives the request only after server signature verification."}
             </p>
             {paymentError && (
               <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -405,6 +440,43 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <textarea value={form.instructions} onChange={(event) => setForm((current) => ({ ...current, instructions: event.target.value }))} placeholder="Special instructions" rows={4} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
           </div>
 
+          {deliveryType === "printed" && (
+            <div className="mt-6 rounded-lg border border-stone-200 bg-slate-50 p-4">
+              <p className="text-xs font-bold uppercase text-stone-500">Fulfillment</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentMethod("pickup")}
+                  className={`rounded-lg border p-4 text-left transition ${fulfillmentMethod === "pickup" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
+                >
+                  <span className="inline-flex items-center gap-2 text-sm font-black text-stone-950"><Store size={17} /> In-store pickup</span>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">Collect from DK STUDIOS and pay the balance at pickup.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentMethod("home_delivery")}
+                  className={`rounded-lg border p-4 text-left transition ${fulfillmentMethod === "home_delivery" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
+                >
+                  <span className="inline-flex items-center gap-2 text-sm font-black text-stone-950"><Home size={17} /> Home delivery</span>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">Queue this printed order for delivery fulfillment after payment.</p>
+                </button>
+              </div>
+
+              {fulfillmentRequiresAddress && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <input value={shipping.name} onChange={(event) => setShipping((current) => ({ ...current, name: event.target.value }))} placeholder="Recipient name" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+                  <input value={shipping.phone} onChange={(event) => setShipping((current) => ({ ...current, phone: event.target.value }))} placeholder="Delivery phone" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+                  <input value={shipping.addressLine1} onChange={(event) => setShipping((current) => ({ ...current, addressLine1: event.target.value }))} placeholder="Address line 1" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
+                  <input value={shipping.addressLine2} onChange={(event) => setShipping((current) => ({ ...current, addressLine2: event.target.value }))} placeholder="Address line 2 (optional)" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
+                  <input value={shipping.city} onChange={(event) => setShipping((current) => ({ ...current, city: event.target.value }))} placeholder="City" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+                  <input value={shipping.state} onChange={(event) => setShipping((current) => ({ ...current, state: event.target.value }))} placeholder="State" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+                  <input value={shipping.pincode} onChange={(event) => setShipping((current) => ({ ...current, pincode: event.target.value }))} placeholder="Pincode" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+                  <input value={shipping.country} onChange={(event) => setShipping((current) => ({ ...current, country: event.target.value }))} placeholder="Country" className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-6">
             <PhotoUploadStudio assets={assets} onChange={setAssets} />
           </div>
@@ -441,8 +513,15 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <Info label="Total" value={`Rs. ${total}`} highlight dark />
             <Info label="Advance" value={`Rs. ${advance}`} dark />
             <Info label="Balance after work" value={`Rs. ${balance}`} dark />
+            <Info label="Fulfillment" value={deliveryType === "printed" ? (fulfillmentMethod === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
             <Info label="Prepared files" value={`${assets.length}`} dark />
           </div>
+          {deliveryType === "printed" && fulfillmentMethod === "home_delivery" && (
+            <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
+              <span className="inline-flex items-center gap-2 font-black text-[#f7d880]"><PackageCheck size={16} /> Qikink fulfillment</span>
+              <p className="mt-2">The order will be queued for the connected delivery partner after advance payment.</p>
+            </div>
+          )}
         </aside>
         </div>
       </div>

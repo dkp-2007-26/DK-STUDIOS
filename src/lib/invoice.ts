@@ -47,6 +47,11 @@ function toTitleCase(value: string | null | undefined, fallback = '-') {
     .join(' ');
 }
 
+function fulfillmentLabel(order: Order) {
+  if (order.delivery_type !== 'printed') return 'Digital';
+  return order.fulfillment_method === 'home_delivery' ? 'Home delivery' : 'In-store pickup';
+}
+
 function color(doc: jsPDF, value: RGB, target: 'fill' | 'draw' | 'text') {
   const [r, g, b] = value;
   if (target === 'fill') doc.setFillColor(r, g, b);
@@ -207,7 +212,7 @@ function drawHeader(doc: jsPDF, order: Order, billNumber: string) {
   drawBrandMark(doc, MARGIN, 27);
   text(doc, BRAND_NAME, MARGIN + 74, 47, { size: 22, style: 'bold', rgb: paper });
   text(doc, PARENT_BRAND_LABEL, MARGIN + 75, 65, { size: 8.8, style: 'bold', rgb: gold });
-  text(doc, 'Photo editing, printing, framing and pickup billing', MARGIN + 75, 84, {
+  text(doc, 'Photo editing, printing, framing and delivery billing', MARGIN + 75, 84, {
     size: 8.8,
     rgb: [203, 213, 225],
   });
@@ -250,7 +255,7 @@ function drawCustomerAndOrderCards(doc: jsPDF, order: Order, billNumber: string,
   labelValue(doc, 'Bill Number', billNumber, MARGIN + leftWidth + gap + 16, top + 50, 115);
   labelValue(doc, 'Order ID', order.id, MARGIN + leftWidth + gap + 148, top + 50, rightWidth - 164);
   labelValue(doc, 'Service', serviceName, MARGIN + leftWidth + gap + 16, top + 86, 115);
-  labelValue(doc, 'Delivery', toTitleCase(order.delivery_type), MARGIN + leftWidth + gap + 148, top + 86, rightWidth - 164);
+  labelValue(doc, 'Fulfillment', fulfillmentLabel(order), MARGIN + leftWidth + gap + 148, top + 86, rightWidth - 164);
 }
 
 function drawLineItems(doc: jsPDF, order: Order, serviceName: string, subtotal: number, discount: number) {
@@ -268,7 +273,7 @@ function drawLineItems(doc: jsPDF, order: Order, serviceName: string, subtotal: 
   const rows: Array<[string, string, string, string, boolean]> = [
     [`Studio work - ${serviceName}`, '1', formatCurrency(subtotal), formatCurrency(subtotal), true],
     [
-      `${toTitleCase(order.delivery_type)} delivery${order.frame_option ? `, ${order.frame_option}` : ''}`,
+      `${fulfillmentLabel(order)}${order.frame_option ? `, ${order.frame_option}` : ''}`,
       '-',
       '-',
       'Included',
@@ -328,12 +333,14 @@ function drawPaymentAndBarcode(doc: jsPDF, order: Order, barcodeDataUrl: string 
   summaryRow(doc, 'Balance after work', formatCurrency(balance), MARGIN + 16, top + 158, summaryWidth - 32, true);
 
   panel(doc, MARGIN + summaryWidth + gap, top, barcodeWidth, 166, night, night);
-  text(doc, 'Pickup Barcode', MARGIN + summaryWidth + gap + 16, top + 25, {
+  text(doc, order.fulfillment_method === 'home_delivery' ? 'Delivery Barcode' : 'Pickup Barcode', MARGIN + summaryWidth + gap + 16, top + 25, {
     size: 12.2,
     style: 'bold',
     rgb: paper,
   });
-  text(doc, ['Show at shop.', 'Pay balance', 'cash/UPI QR.'], MARGIN + summaryWidth + gap + 16, top + 47, {
+  text(doc, order.fulfillment_method === 'home_delivery'
+    ? ['Use for delivery', 'verification.', 'Keep bill ready.']
+    : ['Show at shop.', 'Pay balance', 'cash/UPI QR.'], MARGIN + summaryWidth + gap + 16, top + 47, {
     size: 8.6,
     rgb: [203, 213, 225],
     lineHeight: 1.18,
@@ -398,7 +405,7 @@ function drawTermsAndSignature(doc: jsPDF, order: Order, signatureDataUrl: strin
   }
   text(doc, BRAND_NAME, MARGIN + 158, footerTop + 45, { size: 9.5, style: 'bold', rgb: ink });
 
-  text(doc, 'Amount Due at Delivery', PAGE_WIDTH - MARGIN - 16, footerTop + 21, {
+  text(doc, order.fulfillment_method === 'home_delivery' ? 'Amount Due at Delivery' : 'Amount Due at Pickup', PAGE_WIDTH - MARGIN - 16, footerTop + 21, {
     size: 8,
     style: 'bold',
     rgb: muted,

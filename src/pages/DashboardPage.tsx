@@ -38,11 +38,12 @@ export default function DashboardPage({ navigate }: DashboardProps) {
   const balance = order ? Math.max(order.total_amount - order.advance_amount, 0) : 0;
   const timeline = useMemo(() => {
     if (!order) return [];
+    const fulfillmentLabel = order.fulfillment_method === "home_delivery" ? "Home delivery" : "Ready for pickup";
     return [
       { label: "Order received", active: true },
       { label: "Payment confirmed", active: order.payment_status === "paid" },
       { label: "Studio started", active: order.status === "in_progress" || order.status === "completed" },
-      { label: order.delivery_type === "printed" ? "Ready for pickup" : "Completed", active: order.status === "completed" },
+      { label: order.delivery_type === "printed" ? fulfillmentLabel : "Completed", active: order.status === "completed" },
     ];
   }, [order]);
 
@@ -142,7 +143,8 @@ export default function DashboardPage({ navigate }: DashboardProps) {
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <Info label="Customer" value={order.customer_name} />
-                <Info label="Delivery" value={order.delivery_type === "printed" ? "Printed pickup" : "Digital"} />
+                <Info label="Delivery" value={order.delivery_type === "printed" ? "Printed copy" : "Digital"} />
+                <Info label="Fulfillment" value={order.delivery_type === "printed" ? (order.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} />
                 <Info label="Payment" value={payment.label} valueClassName={payment.color} />
                 <Info label="Total" value={`Rs. ${order.total_amount}`} />
                 <Info label="Advance" value={`Rs. ${order.advance_amount}`} />
@@ -162,10 +164,17 @@ export default function DashboardPage({ navigate }: DashboardProps) {
             </section>
 
             <aside className="h-fit rounded-lg border border-white/10 bg-[#101820] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
-              <p className="text-xs font-bold uppercase text-[#f7d880]">Pickup and support</p>
+              <p className="text-xs font-bold uppercase text-[#f7d880]">Delivery and support</p>
               <p className="mt-3 text-sm leading-7 text-slate-300">
-                Keep this order id with you. For printed orders, show the bill number or barcode at pickup.
+                {order.fulfillment_method === "home_delivery"
+                  ? "Keep this order id with you. Your printed order will be prepared for home delivery after the work is complete."
+                  : "Keep this order id with you. For printed orders, show the bill number or barcode at pickup."}
               </p>
+              {order.fulfillment_method === "home_delivery" && (
+                <div className="mt-4 rounded-lg border border-white/10 bg-white/10 p-3 text-sm text-slate-300">
+                  Qikink status: <span className="font-black text-[#f7d880]">{order.qikink_status.replace("_", " ")}</span>
+                </div>
+              )}
               {order.barcode_url && (
                 <div className="mt-5 rounded-lg bg-white p-3">
                   <img src={order.barcode_url} alt={`Barcode for ${order.bill_number ?? order.id}`} className="h-auto w-full" />

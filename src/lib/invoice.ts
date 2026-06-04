@@ -52,6 +52,13 @@ function fulfillmentLabel(order: Order) {
   return order.fulfillment_method === 'home_delivery' ? 'Home delivery' : 'In-store pickup';
 }
 
+function supplierLabel(order: Order) {
+  if (order.supplier === 'local') return 'Local standard';
+  if (order.supplier === 'vistaprint' && order.frame_fulfillment_tier === 'vistaprint_premium') return 'Vistaprint premium';
+  if (order.supplier === 'vistaprint') return 'Vistaprint';
+  return 'Internal';
+}
+
 function color(doc: jsPDF, value: RGB, target: 'fill' | 'draw' | 'text') {
   const [r, g, b] = value;
   if (target === 'fill') doc.setFillColor(r, g, b);
@@ -256,6 +263,7 @@ function drawCustomerAndOrderCards(doc: jsPDF, order: Order, billNumber: string,
   labelValue(doc, 'Order ID', order.id, MARGIN + leftWidth + gap + 148, top + 50, rightWidth - 164);
   labelValue(doc, 'Service', serviceName, MARGIN + leftWidth + gap + 16, top + 86, 115);
   labelValue(doc, 'Fulfillment', fulfillmentLabel(order), MARGIN + leftWidth + gap + 148, top + 86, rightWidth - 164);
+  labelValue(doc, 'Supplier', supplierLabel(order), MARGIN + leftWidth + gap + 16, top + 114, rightWidth - 32);
 }
 
 function drawLineItems(doc: jsPDF, order: Order, serviceName: string, subtotal: number, discount: number) {

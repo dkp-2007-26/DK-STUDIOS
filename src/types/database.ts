@@ -82,6 +82,13 @@ export interface Order {
   files_deleted_at: string | null;
   files_deletion_failed_at: string | null;
   files_deletion_error: string | null;
+  supplier: 'none' | 'local' | 'vistaprint';
+  supplier_status: 'not_required' | 'queued' | 'submitted' | 'completed' | 'failed';
+  supplier_order_id: string | null;
+  supplier_submitted_at: string | null;
+  supplier_error: string | null;
+  frame_fulfillment_tier: 'local_standard' | 'vistaprint_premium' | null;
+  product_kind: string | null;
   qikink_status: 'not_required' | 'queued' | 'submitted' | 'failed';
   qikink_order_id: string | null;
   qikink_submitted_at: string | null;

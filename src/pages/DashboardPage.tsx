@@ -25,6 +25,13 @@ const paymentStatusConfig = {
   failed: { label: "Failed", color: "text-red-700" },
 };
 
+function supplierLabel(order: Order) {
+  if (order.supplier === "local") return "Local standard";
+  if (order.supplier === "vistaprint" && order.frame_fulfillment_tier === "vistaprint_premium") return "Vistaprint premium";
+  if (order.supplier === "vistaprint") return "Vistaprint";
+  return "Internal";
+}
+
 export default function DashboardPage({ navigate }: DashboardProps) {
   const [inputOrderId, setInputOrderId] = useState(() => localStorage.getItem(LAST_ORDER_ID_KEY) ?? "");
   const [submittedOrderId, setSubmittedOrderId] = useState(() => localStorage.getItem(LAST_ORDER_ID_KEY) ?? "");
@@ -145,6 +152,7 @@ export default function DashboardPage({ navigate }: DashboardProps) {
                 <Info label="Customer" value={order.customer_name} />
                 <Info label="Delivery" value={order.delivery_type === "printed" ? "Printed copy" : "Digital"} />
                 <Info label="Fulfillment" value={order.delivery_type === "printed" ? (order.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} />
+                <Info label="Supplier" value={supplierLabel(order)} />
                 <Info label="Payment" value={payment.label} valueClassName={payment.color} />
                 <Info label="Total" value={`Rs. ${order.total_amount}`} />
                 <Info label="Advance" value={`Rs. ${order.advance_amount}`} />
@@ -172,7 +180,7 @@ export default function DashboardPage({ navigate }: DashboardProps) {
               </p>
               {order.fulfillment_method === "home_delivery" && (
                 <div className="mt-4 rounded-lg border border-white/10 bg-white/10 p-3 text-sm text-slate-300">
-                  Qikink status: <span className="font-black text-[#f7d880]">{order.qikink_status.replace("_", " ")}</span>
+                  Supplier status: <span className="font-black text-[#f7d880]">{order.supplier_status.replace("_", " ")}</span>
                 </div>
               )}
               {order.barcode_url && (

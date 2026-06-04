@@ -40,6 +40,12 @@ const formatFulfillment = (order: Order) =>
   order.delivery_type === "printed"
     ? order.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup"
     : "Digital";
+const formatSupplier = (order: Order) => {
+  if (order.supplier === "local") return "Local standard";
+  if (order.supplier === "vistaprint" && order.frame_fulfillment_tier === "vistaprint_premium") return "Vistaprint premium";
+  if (order.supplier === "vistaprint") return "Vistaprint";
+  return "Internal";
+};
 
 export default function AdminOperationsPage({ navigate }: AdminOperationsPageProps) {
   const { user, isAdmin, signOut } = useAuth();
@@ -229,12 +235,9 @@ function OrderRow({ order, onPatch }: { order: Order; onPatch: (orderId: string,
         <p className="mt-1 break-all text-xs text-stone-500">Order ID: {order.id}</p>
         <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-stone-600">
           <span className="rounded-full border border-stone-200 bg-slate-50 px-2 py-1">{formatFulfillment(order)}</span>
-          {order.fulfillment_method === "home_delivery" && (
-            <>
-              <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-orange-800">Qikink: {order.qikink_status.replace("_", " ")}</span>
-              <span className="rounded-full border border-stone-200 bg-slate-50 px-2 py-1">{[order.shipping_city, order.shipping_state, order.shipping_pincode].filter(Boolean).join(", ")}</span>
-            </>
-          )}
+          {order.delivery_type === "printed" && <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-orange-800">Supplier: {formatSupplier(order)}</span>}
+          {order.delivery_type === "printed" && <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-sky-800">Route: {order.supplier_status.replace("_", " ")}</span>}
+          {order.fulfillment_method === "home_delivery" && <span className="rounded-full border border-stone-200 bg-slate-50 px-2 py-1">{[order.shipping_city, order.shipping_state, order.shipping_pincode].filter(Boolean).join(", ")}</span>}
         </div>
       </div>
       <div className="flex flex-wrap gap-2">

@@ -43,6 +43,19 @@ function isCustomerDismissalError(error: unknown) {
   return error instanceof Error && error.message === RAZORPAY_DISMISSAL_MESSAGE;
 }
 
+function isPhotoFrameService(service: Service | null) {
+  if (!service) return false;
+  const haystack = [service.id, service.name, service.category, service.description ?? ""].join(" ").toLowerCase();
+  return haystack.includes("photo frame") || haystack.includes("photoframe") || haystack.includes("frame");
+}
+
+function supplierLabel(order: Order) {
+  if (order.supplier === "local") return "Local standard";
+  if (order.supplier === "vistaprint" && order.frame_fulfillment_tier === "vistaprint_premium") return "Vistaprint premium";
+  if (order.supplier === "vistaprint") return "Vistaprint";
+  return "Internal";
+}
+
 export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExperiencePageProps) {
   const { user, sessionToken } = useAuth();
   const { data: publicData } = useAsyncData(loadPublicSnapshot, []);
@@ -53,6 +66,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   const [templateId, setTemplateId] = useState("");
   const [deliveryType, setDeliveryType] = useState<"digital" | "printed">("digital");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"pickup" | "home_delivery">("pickup");
+  const [frameFulfillmentTier, setFrameFulfillmentTier] = useState<"local_standard" | "vistaprint_premium">("local_standard");
   const [assets, setAssets] = useState<EditablePhotoAsset[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
@@ -87,6 +101,10 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   }, [user]);
 
   const selectedService = services.find((service) => service.id === serviceId) ?? null;
+  const selectedServiceIsPhotoFrame = isPhotoFrameService(selectedService);
+  const routedSupplier = deliveryType === "printed"
+    ? selectedServiceIsPhotoFrame && frameFulfillmentTier === "local_standard" ? "Local standard" : "Vistaprint"
+    : "Digital";
   const fulfillmentRequiresAddress = deliveryType === "printed" && fulfillmentMethod === "home_delivery";
   const subtotal = selectedService
     ? selectedService.base_price + (deliveryType === "printed" ? selectedService.print_price : 0)
@@ -130,6 +148,8 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         serviceId: selectedService.id,
         deliveryType,
         fulfillmentMethod,
+        frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
+        supplier: routedSupplier,
         assetCount: assets.length,
         total,
       });
@@ -171,6 +191,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         photoAssets: uploadedPhotos,
         deliveryType,
         fulfillmentMethod: deliveryType === "printed" ? fulfillmentMethod : "pickup",
+        frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
         shippingAddress: fulfillmentRequiresAddress ? {
           name: shipping.name || form.name,
           phone: shipping.phone || form.phone,
@@ -202,6 +223,8 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           hasTemplate: Boolean(templateId),
           deliveryType,
           fulfillmentMethod,
+          frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
+          supplier: routedSupplier,
           assetCount: assets.length,
           hasPromo: Boolean(appliedPromoCode),
           total,
@@ -337,13 +360,13 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
               ? `Your Rs. ${MANDATORY_ADVANCE_AMOUNT} advance is verified. The remaining balance is paid after the work by cash or shop QR.`
               : `Files were uploaded to Google Drive. Pay the mandatory Rs. ${MANDATORY_ADVANCE_AMOUNT} online advance to submit the request to ${BRAND_NAME}.`}
           </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-5">
+          <div className="mt-6 grid gap-3 sm:grid-cols-6">
             <Info label="Order ID" value={createdOrder.id} />
             <Info label="Bill" value={createdOrder.bill_number ?? "Pending"} />
             <Info label="Advance" value={`Rs. ${createdOrder.advance_amount}`} />
             <Info label="Balance" value={`Rs. ${Math.max(createdOrder.total_amount - createdOrder.advance_amount, 0)}`} />
             <Info label="Payment" value={paymentIsPaid ? "Paid" : "Pending"} />
-            <Info label="Fulfillment" value={createdOrder.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup"} />
+            <Info label="Supplier" value={supplierLabel(createdOrder)} />
           </div>
           <div className={`mt-6 rounded-lg border p-4 text-left ${paymentIsPaid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
             <p className={`text-sm font-black ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
@@ -352,8 +375,8 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <p className={`mt-2 text-sm leading-6 ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
             {paymentIsPaid
               ? createdOrder.fulfillment_method === "home_delivery"
-                ? "Your request is now visible to the studio. Home delivery is queued for fulfillment after the work is complete."
-                : "Your request is now visible to the studio. The final balance is collected at in-store pickup after the work is complete."
+                ? `Your request is now visible to the studio. ${supplierLabel(createdOrder)} fulfillment is queued after the work is complete.`
+                : `Your request is now visible to the studio. Supplier route: ${supplierLabel(createdOrder)}.`
               : "Pay the Rs. 49 advance using DK STUDIOS' Razorpay account. The studio receives the request only after server signature verification."}
             </p>
             {paymentError && (
@@ -442,7 +465,32 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
 
           {deliveryType === "printed" && (
             <div className="mt-6 rounded-lg border border-stone-200 bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase text-stone-500">Fulfillment</p>
+              <p className="text-xs font-bold uppercase text-stone-500">Supplier and fulfillment</p>
+              {selectedServiceIsPhotoFrame ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setFrameFulfillmentTier("local_standard")}
+                    className={`rounded-lg border p-4 text-left transition ${frameFulfillmentTier === "local_standard" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
+                  >
+                    <span className="inline-flex items-center gap-2 text-sm font-black text-stone-950"><Store size={17} /> Standard photo frame</span>
+                    <p className="mt-2 text-sm leading-6 text-stone-600">Routed to local supplier for standard photo frame orders.</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFrameFulfillmentTier("vistaprint_premium")}
+                    className={`rounded-lg border p-4 text-left transition ${frameFulfillmentTier === "vistaprint_premium" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
+                  >
+                    <span className="inline-flex items-center gap-2 text-sm font-black text-stone-950"><PackageCheck size={17} /> Premium photo frame</span>
+                    <p className="mt-2 text-sm leading-6 text-stone-600">Routed to Vistaprint for premium photo frame orders.</p>
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 rounded-lg border border-stone-200 bg-white p-4 text-sm leading-6 text-stone-600">
+                  <span className="inline-flex items-center gap-2 font-black text-stone-950"><PackageCheck size={17} /> Vistaprint only</span>
+                  <p className="mt-2">This product will be routed to Vistaprint. No backup supplier is used.</p>
+                </div>
+              )}
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
@@ -458,7 +506,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
                   className={`rounded-lg border p-4 text-left transition ${fulfillmentMethod === "home_delivery" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
                 >
                   <span className="inline-flex items-center gap-2 text-sm font-black text-stone-950"><Home size={17} /> Home delivery</span>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">Queue this printed order for delivery fulfillment after payment.</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">Queue this printed order for supplier-handled delivery after payment.</p>
                 </button>
               </div>
 
@@ -514,12 +562,13 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <Info label="Advance" value={`Rs. ${advance}`} dark />
             <Info label="Balance after work" value={`Rs. ${balance}`} dark />
             <Info label="Fulfillment" value={deliveryType === "printed" ? (fulfillmentMethod === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
+            <Info label="Supplier" value={routedSupplier} dark />
             <Info label="Prepared files" value={`${assets.length}`} dark />
           </div>
-          {deliveryType === "printed" && fulfillmentMethod === "home_delivery" && (
+          {deliveryType === "printed" && (
             <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
-              <span className="inline-flex items-center gap-2 font-black text-[#f7d880]"><PackageCheck size={16} /> Qikink fulfillment</span>
-              <p className="mt-2">The order will be queued for the connected delivery partner after advance payment.</p>
+              <span className="inline-flex items-center gap-2 font-black text-[#f7d880]"><PackageCheck size={16} /> Supplier route</span>
+              <p className="mt-2">{selectedServiceIsPhotoFrame ? "Photo frames use Local for Standard and Vistaprint for Premium." : "This product is routed to Vistaprint only."}</p>
             </div>
           )}
         </aside>

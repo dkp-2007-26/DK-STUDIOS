@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { getSupabaseServiceClient, requireRazorpayEnv, requireRole, SupabaseServerError } from "../lib/supabase-server.js";
-import { createQikinkFulfillmentJob } from "../lib/qikink.js";
+import { createSupplierFulfillmentJob, resolveSupplierRoute } from "../lib/supplier-fulfillment.js";
 import {
   captureFunctionError,
   flushGlitchTip,
@@ -102,6 +102,13 @@ function toOrder(row) {
     files_deleted_at: row.files_deleted_at,
     files_deletion_failed_at: row.files_deletion_failed_at,
     files_deletion_error: row.files_deletion_error,
+    supplier: row.supplier ?? "none",
+    supplier_status: row.supplier_status ?? "not_required",
+    supplier_order_id: row.supplier_order_id,
+    supplier_submitted_at: row.supplier_submitted_at,
+    supplier_error: row.supplier_error,
+    frame_fulfillment_tier: row.frame_fulfillment_tier,
+    product_kind: row.product_kind,
     qikink_status: row.qikink_status ?? "not_required",
     qikink_order_id: row.qikink_order_id,
     qikink_submitted_at: row.qikink_submitted_at,
@@ -281,7 +288,7 @@ function normalizeFulfillment(body) {
       fulfillment_method: fulfillmentMethod,
       ...required,
       shipping_address_line2: address.addressLine2 ? String(address.addressLine2).trim() : null,
-      qikink_status: "queued",
+      qikink_status: "not_required",
     };
   }
   return {
@@ -386,6 +393,7 @@ async function createOrder(supabase, body) {
   const reviewToken = `rvw_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   const photoAssets = Array.isArray(body.photoAssets) ? body.photoAssets : [];
   const fulfillment = normalizeFulfillment(body);
+  const supplierRoute = await resolveSupplierRoute(supabase, body);
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -396,6 +404,7 @@ async function createOrder(supabase, body) {
       customer_email: email,
       customer_phone: body.customerPhone || null,
       ...fulfillment,
+      ...supplierRoute,
       instructions: body.instructions || null,
       frame_option: body.frameOption || null,
       frame_size: body.frameSize || null,
@@ -465,13 +474,11 @@ async function createOrder(supabase, body) {
     await supabase.rpc("increment_promotion_use", { promo_code: promo.code }).catch(() => null);
   }
 
-  if (order.fulfillment_method === "home_delivery") {
-    await createQikinkFulfillmentJob(supabase, order, {
-      serviceCode: body.serviceCode,
-      templateCode: body.templateCode || null,
-      photoAssets,
-    });
-  }
+  await createSupplierFulfillmentJob(supabase, order, {
+    serviceCode: body.serviceCode,
+    templateCode: body.templateCode || null,
+    photoAssets,
+  });
 
   return toOrder(order);
 }

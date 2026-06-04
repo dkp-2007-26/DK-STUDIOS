@@ -1,0 +1,20 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy-Report-Only = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; script-src 'self' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://app.glitchtip.com https://*.supabase.co wss://*.supabase.co https://api.razorpay.com; frame-src 'self' https://www.google.com https://api.razorpay.com https://checkout.razorpay.com; form-action 'self'; report-uri https://app.glitchtip.com/api/22971/security/?glitchtip_key=52b91fa574fc4d4a96f76f3ab9f04e1c"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

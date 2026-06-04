@@ -1,0 +1,460 @@
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle, CreditCard, MessageCircle, Tag } from "lucide-react";
+import PhotoUploadStudio, { type EditablePhotoAsset } from "../components/order/PhotoUploadStudio";
+import { useAuth } from "../context/AuthContext";
+import type { Page } from "../hooks/useRouter";
+import { BRAND_NAME, BRAND_STORAGE_SLUG, PAYMENT_PROVIDER_NAME, SUPPORT_WHATSAPP_URL } from "../lib/brand";
+import { downloadInvoicePdf } from "../lib/invoice";
+import { uploadFileToGoogleDrive } from "../lib/googleDrive";
+import { openRazorpayCheckout } from "../lib/razorpay";
+import { addGlitchTipBreadcrumb, captureGlitchTipError } from "../lib/glitchtip";
+import type { Order, Service, Template } from "../types/database";
+import { useAsyncData } from "../hooks/useAsyncData";
+import {
+  createOrder,
+  createRazorpayCheckout,
+  loadPublicSnapshot,
+  previewPromotion,
+  verifyRazorpayPayment,
+  type PromoPreview,
+} from "../lib/studioApi";
+
+interface OrderExperiencePageProps {
+  navigate: (page: Page) => void;
+  onOpenAuth: (mode: "login" | "signup") => void;
+}
+
+type RazorpayCheckoutSession = {
+  already_paid: boolean;
+  provider_order_id: string;
+  key_id: string;
+  amount_paise: number;
+  currency: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  receipt: string;
+};
+
+const MANDATORY_ADVANCE_AMOUNT = 49;
+const RAZORPAY_DISMISSAL_MESSAGE = "Payment popup closed before completion.";
+
+function isCustomerDismissalError(error: unknown) {
+  return error instanceof Error && error.message === RAZORPAY_DISMISSAL_MESSAGE;
+}
+
+export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExperiencePageProps) {
+  const { user, sessionToken } = useAuth();
+  const { data: publicData } = useAsyncData(loadPublicSnapshot, []);
+  const services = (publicData?.services ?? []) as Service[];
+  const templates = (publicData?.templates ?? []) as Template[];
+
+  const [serviceId, setServiceId] = useState("");
+  const [templateId, setTemplateId] = useState("");
+  const [deliveryType, setDeliveryType] = useState<"digital" | "printed">("digital");
+  const [assets, setAssets] = useState<EditablePhotoAsset[]>([]);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", instructions: "", personalizationText: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [promoPreview, setPromoPreview] = useState<PromoPreview>(null);
+  void onOpenAuth;
+
+  useEffect(() => {
+    if (user) {
+      setForm((current) => ({
+        ...current,
+        name: current.name || user.displayName,
+        email: current.email || user.email,
+      }));
+    }
+  }, [user]);
+
+  const selectedService = services.find((service) => service.id === serviceId) ?? null;
+  const subtotal = selectedService
+    ? selectedService.base_price + (deliveryType === "printed" ? selectedService.print_price : 0)
+    : 0;
+  const total = promoPreview?.total_amount ?? subtotal;
+  const advance = MANDATORY_ADVANCE_AMOUNT;
+  const balance = Math.max(total - advance, 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!appliedPromoCode) {
+      setPromoPreview(null);
+      return;
+    }
+    previewPromotion(appliedPromoCode, subtotal)
+      .then((preview) => {
+        if (!cancelled) setPromoPreview(preview);
+      })
+      .catch(() => {
+        if (!cancelled) setPromoPreview(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [appliedPromoCode, subtotal]);
+
+  const handleSubmit = async () => {
+    if (!selectedService) return;
+
+    setSubmitting(true);
+    setError("");
+    try {
+      addGlitchTipBreadcrumb("Customer started order submission", {
+        serviceId: selectedService.id,
+        deliveryType,
+        assetCount: assets.length,
+        total,
+      });
+
+      const folderOwner = user?.id ?? `guest-${Date.now()}`;
+      const folder = `${BRAND_STORAGE_SLUG}/orders/${folderOwner}`;
+      const uploadedPhotos = await Promise.all(
+        assets.map(async (asset, index) => {
+          const upload = await uploadFileToGoogleDrive({
+            file: asset.file,
+            folder,
+            sessionToken,
+          });
+          return {
+            ...upload,
+            sortOrder: index,
+            cropX: asset.crop?.x ?? null,
+            cropY: asset.crop?.y ?? null,
+            cropWidth: asset.crop?.width ?? null,
+            cropHeight: asset.crop?.height ?? null,
+          };
+        }),
+      );
+
+      const order = (await createOrder({
+        sessionToken: sessionToken ?? null,
+        serviceCode: selectedService.id,
+        templateCode: templateId || null,
+        customerName: form.name,
+        customerEmail: form.email,
+        customerPhone: form.phone || null,
+        instructions: form.instructions || null,
+        frameOption: "No Frame",
+        frameSize: "A4",
+        collagePreference: "make_for_me",
+        personalizationText: form.personalizationText || null,
+        photoCount: assets.length,
+        photoNames: assets.map((asset) => asset.file.name),
+        photoAssets: uploadedPhotos,
+        deliveryType,
+        subtotalAmount: subtotal,
+        promoCode: appliedPromoCode || null,
+        totalAmount: total,
+        advanceAmount: advance,
+      })) as Order;
+
+      setCreatedOrder(order);
+      localStorage.setItem("d.k-studios.lastOrderId", order.id);
+      setPaymentError("");
+      setPaymentSuccess(order.payment_status === "paid");
+    } catch (submitError) {
+      captureGlitchTipError(submitError, {
+        tags: {
+          surface: "checkout",
+          operation: "order_submit",
+        },
+        extra: {
+          serviceId: selectedService.id,
+          hasTemplate: Boolean(templateId),
+          deliveryType,
+          assetCount: assets.length,
+          hasPromo: Boolean(appliedPromoCode),
+          total,
+          advance,
+        },
+        fingerprint: ["checkout", "order_submit"],
+      });
+      setError((submitError as Error).message || "Unable to place order.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePayAdvance = async () => {
+    if (!createdOrder) return;
+
+    setPaymentProcessing(true);
+    setPaymentError("");
+    try {
+      addGlitchTipBreadcrumb("Customer started advance payment", {
+        orderId: createdOrder.id,
+        billNumber: createdOrder.bill_number,
+        amount: createdOrder.advance_amount,
+      });
+
+      const checkout = (await createRazorpayCheckout(createdOrder.id)) as RazorpayCheckoutSession;
+
+      if (checkout.already_paid) {
+        setPaymentSuccess(true);
+        setCreatedOrder((current) => current ? { ...current, payment_status: "paid" } : current);
+        return;
+      }
+
+      if (!checkout.key_id) {
+        throw new Error("Razorpay key id is not configured.");
+      }
+
+      const paymentResponse = await openRazorpayCheckout({
+        key: checkout.key_id,
+        amountPaise: checkout.amount_paise,
+        currency: checkout.currency,
+        providerOrderId: checkout.provider_order_id,
+        brandName: BRAND_NAME,
+        description: `Advance payment for ${checkout.receipt}`,
+        customerName: checkout.customer_name,
+        customerEmail: checkout.customer_email,
+        customerPhone: checkout.customer_phone,
+        billNumber: checkout.receipt,
+      });
+
+      const verified = (await verifyRazorpayPayment({
+        sessionToken: sessionToken ?? null,
+        orderId: createdOrder.id,
+        providerOrderId: paymentResponse.razorpay_order_id,
+        providerPaymentId: paymentResponse.razorpay_payment_id,
+        providerSignature: paymentResponse.razorpay_signature,
+      })) as { ok: boolean };
+
+      if (!verified.ok) {
+        throw new Error("Razorpay payment could not be verified.");
+      }
+
+      setPaymentSuccess(true);
+      setCreatedOrder((current) => current
+        ? {
+            ...current,
+            payment_status: "paid",
+            payment_provider: "razorpay",
+            payment_order_id: paymentResponse.razorpay_order_id,
+            payment_id: paymentResponse.razorpay_payment_id,
+            payment_completed_at: new Date().toISOString(),
+          }
+        : current);
+    } catch (paymentSubmitError) {
+      if (!isCustomerDismissalError(paymentSubmitError)) {
+        captureGlitchTipError(paymentSubmitError, {
+          tags: {
+            surface: "checkout",
+            operation: "advance_payment",
+            provider: "razorpay",
+          },
+          extra: {
+            orderId: createdOrder.id,
+            billNumber: createdOrder.bill_number,
+            amount: createdOrder.advance_amount,
+            paymentStatus: createdOrder.payment_status,
+          },
+          fingerprint: ["checkout", "advance_payment", "razorpay"],
+        });
+      }
+      setPaymentError((paymentSubmitError as Error).message || "Unable to start Razorpay payment.");
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  const handleDownloadBill = async (order: Order) => {
+    try {
+      addGlitchTipBreadcrumb("Customer downloaded bill", {
+        orderId: order.id,
+        billNumber: order.bill_number,
+      });
+      await downloadInvoicePdf(order);
+    } catch (billError) {
+      captureGlitchTipError(billError, {
+        tags: {
+          surface: "checkout",
+          operation: "bill_download",
+        },
+        extra: {
+          orderId: order.id,
+          billNumber: order.bill_number,
+          paymentStatus: order.payment_status,
+        },
+        fingerprint: ["checkout", "bill_download"],
+      });
+      setPaymentError("Could not generate the bill. Please try again.");
+    }
+  };
+
+  if (createdOrder) {
+    const paymentIsPaid = createdOrder.payment_status === "paid" || paymentSuccess;
+
+    return (
+      <div className="min-h-screen bg-[#f7f2e8] px-4 pb-16 pt-28 text-stone-950">
+        <div className="mx-auto max-w-2xl rounded-lg border border-stone-200 bg-white p-6 text-center shadow-[0_24px_70px_rgba(52,36,10,0.12)] sm:p-8">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <CheckCircle size={36} />
+          </div>
+          <h1 className="text-3xl font-black text-stone-950">{paymentIsPaid ? "Request submitted" : "Pay advance to submit"}</h1>
+          <p className="mt-3 text-sm leading-7 text-stone-600">
+            {paymentIsPaid
+              ? `Your Rs. ${MANDATORY_ADVANCE_AMOUNT} advance is verified. The remaining balance is paid after the work by cash or shop QR.`
+              : `Files were uploaded to Google Drive. Pay the mandatory Rs. ${MANDATORY_ADVANCE_AMOUNT} online advance to submit the request to ${BRAND_NAME}.`}
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-5">
+            <Info label="Order ID" value={createdOrder.id} />
+            <Info label="Bill" value={createdOrder.bill_number ?? "Pending"} />
+            <Info label="Advance" value={`Rs. ${createdOrder.advance_amount}`} />
+            <Info label="Balance" value={`Rs. ${Math.max(createdOrder.total_amount - createdOrder.advance_amount, 0)}`} />
+            <Info label="Payment" value={paymentIsPaid ? "Paid" : "Pending"} />
+          </div>
+          <div className={`mt-6 rounded-lg border p-4 text-left ${paymentIsPaid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+            <p className={`text-sm font-black ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
+              {paymentIsPaid ? "Payment verified" : `${PAYMENT_PROVIDER_NAME} checkout is ready`}
+            </p>
+            <p className={`mt-2 text-sm leading-6 ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
+              {paymentIsPaid
+                ? "Your request is now visible to the studio. The final balance is collected at delivery after the work is complete."
+                : "Pay the Rs. 49 advance using DK BOOK's Razorpay account. The studio receives the request only after server signature verification."}
+            </p>
+            {paymentError && (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {paymentError}
+              </p>
+            )}
+          </div>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={() => void handleDownloadBill(createdOrder)} className="flex-1 rounded-lg border border-stone-300 px-6 py-3 text-sm font-black text-stone-950 transition hover:border-stone-500">
+              Download Bill
+            </button>
+            <button
+              type="button"
+              onClick={() => void handlePayAdvance()}
+              disabled={paymentProcessing || paymentIsPaid}
+              className="flex-1 rounded-lg bg-[#f1c75b] px-6 py-3 text-sm font-black text-stone-950 transition hover:bg-[#ffdc73] disabled:opacity-60"
+            >
+              <span className="inline-flex items-center gap-2">
+                <CreditCard size={16} />
+                {paymentIsPaid ? "Paid" : paymentProcessing ? "Opening Razorpay..." : `Pay Rs. ${createdOrder.advance_amount} and submit`}
+              </span>
+            </button>
+          </div>
+          <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center justify-center gap-2 text-sm font-bold text-emerald-700 underline">
+            <MessageCircle size={15} /> Need help with this payment?
+          </a>
+          <button type="button" onClick={() => navigate("dashboard")} className="mt-5 block w-full text-sm font-bold text-stone-700 underline">
+            Track this order
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f7f2e8] px-4 pb-16 pt-28 text-stone-950">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 grid gap-5 lg:grid-cols-[1fr,0.65fr] lg:items-end">
+          <div>
+            <p className="text-sm font-bold uppercase text-[#8a5b12]">{BRAND_NAME} checkout</p>
+            <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">Place your order</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600">Preview, crop, and reorder photos before they are uploaded to Google Drive.</p>
+          </div>
+          <div className="rounded-lg border border-stone-300 bg-white p-4 text-sm leading-6 text-stone-600">
+            Files are stored in Google Drive. Rs. {MANDATORY_ADVANCE_AMOUNT} online advance is mandatory; the balance is paid after the work by cash or shop QR.
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1.35fr,0.65fr]">
+        <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-[0_24px_70px_rgba(52,36,10,0.1)] sm:p-8">
+          <h2 className="text-2xl font-black text-stone-950">Choose your service</h2>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {services.map((service) => (
+              <button
+                key={service.id}
+                type="button"
+                onClick={() => setServiceId(service.id)}
+                className={`rounded-lg border p-4 text-left transition ${serviceId === service.id ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-slate-50 hover:border-stone-300"}`}
+              >
+                <p className="font-black text-stone-950">{service.name}</p>
+                <p className="mt-1 text-sm leading-6 text-stone-600">{service.description}</p>
+                <p className="mt-3 text-sm font-black text-[#8a5b12]">Rs. {service.base_price}</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Full name" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+            <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Phone number" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+            <input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="Email address" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
+            <select value={deliveryType} onChange={(event) => setDeliveryType(event.target.value as "digital" | "printed")} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500">
+              <option value="digital">Digital Delivery</option>
+              <option value="printed">Printed Copy</option>
+            </select>
+            <select value={templateId} onChange={(event) => setTemplateId(event.target.value)} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500">
+              <option value="">{BRAND_NAME} custom template</option>
+              {templates.slice(0, 8).map((template) => (
+                <option key={template.id} value={template.id}>{template.name}</option>
+              ))}
+            </select>
+            <input value={form.personalizationText} onChange={(event) => setForm((current) => ({ ...current, personalizationText: event.target.value }))} placeholder="Personalization text" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
+            <textarea value={form.instructions} onChange={(event) => setForm((current) => ({ ...current, instructions: event.target.value }))} placeholder="Special instructions" rows={4} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
+          </div>
+
+          <div className="mt-6">
+            <PhotoUploadStudio assets={assets} onChange={setAssets} />
+          </div>
+
+          <div className="mt-6 rounded-lg border border-stone-200 bg-slate-50 p-4">
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" />
+                <input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Promo code" className="w-full rounded-lg border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
+              </div>
+              <button type="button" onClick={() => setAppliedPromoCode(promoCode.trim() || null)} className="rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-black text-stone-950">Apply</button>
+            </div>
+            {appliedPromoCode && !promoPreview && <p className="mt-3 text-sm font-semibold text-red-600">Promo code is invalid or expired.</p>}
+            {promoPreview && <p className="mt-3 text-sm font-semibold text-emerald-600">{promoPreview.code} applied: save Rs. {promoPreview.discount_amount}</p>}
+          </div>
+
+          {error && (
+            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+              <span className="inline-flex items-center gap-2"><AlertCircle size={16} /> {error}</span>
+            </div>
+          )}
+
+          <button type="button" disabled={submitting || !selectedService || !form.name || !form.email} onClick={() => void handleSubmit()} className="mt-6 w-full rounded-lg bg-[#f1c75b] py-4 text-sm font-black text-stone-950 transition hover:bg-[#ffdc73] disabled:opacity-60">
+            {submitting ? "Uploading to Google Drive..." : `Place Order for ${BRAND_NAME}`}
+          </button>
+        </div>
+
+        <aside className="h-fit rounded-lg border border-white/10 bg-[#101820] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] lg:sticky lg:top-24">
+          <p className="text-xs font-bold uppercase text-[#f7d880]">Order Summary</p>
+          <h2 className="mt-2 text-2xl font-black text-white">{selectedService?.name ?? "Choose a service"}</h2>
+          <div className="mt-6 space-y-3">
+            <Info label="Subtotal" value={`Rs. ${subtotal}`} dark />
+            <Info label="Discount" value={`Rs. ${promoPreview?.discount_amount ?? 0}`} dark />
+            <Info label="Total" value={`Rs. ${total}`} highlight dark />
+            <Info label="Advance" value={`Rs. ${advance}`} dark />
+            <Info label="Balance after work" value={`Rs. ${balance}`} dark />
+            <Info label="Prepared files" value={`${assets.length}`} dark />
+          </div>
+        </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Info({ label, value, highlight = false, dark = false }: { label: string; value: string; highlight?: boolean; dark?: boolean }) {
+  return (
+    <div className={`rounded-lg border px-4 py-3 ${dark ? "border-white/10 bg-white/8" : "border-stone-200 bg-slate-50"}`}>
+      <p className={`text-[11px] font-bold uppercase ${dark ? "text-slate-400" : "text-stone-500"}`}>{label}</p>
+      <p className={`mt-2 text-sm font-black ${dark ? (highlight ? "text-[#f7d880]" : "text-white") : (highlight ? "text-[#8a5b12]" : "text-stone-950")}`}>{value}</p>
+    </div>
+  );
+}

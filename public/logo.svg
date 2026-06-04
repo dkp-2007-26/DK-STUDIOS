@@ -1,0 +1,65 @@
+<svg width="1100" height="360" viewBox="0 0 1100 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DK STUDIOS logo</title>
+  <desc id="desc">DK STUDIOS by DK BOOK with the tagline Memories into Masterpieces</desc>
+  <defs>
+    <linearGradient id="gold" x1="83" y1="38" x2="316" y2="304" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF3BA"/>
+      <stop offset="0.21" stop-color="#F0C85A"/>
+      <stop offset="0.48" stop-color="#B87818"/>
+      <stop offset="0.72" stop-color="#F4D16D"/>
+      <stop offset="1" stop-color="#805211"/>
+    </linearGradient>
+    <linearGradient id="brightGold" x1="349" y1="106" x2="853" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4BF"/>
+      <stop offset="0.2" stop-color="#F1C85D"/>
+      <stop offset="0.48" stop-color="#C99224"/>
+      <stop offset="0.75" stop-color="#FFE89C"/>
+      <stop offset="1" stop-color="#B77A1A"/>
+    </linearGradient>
+    <linearGradient id="deepGold" x1="348" y1="245" x2="727" y2="306" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D9AA35"/>
+      <stop offset="0.4" stop-color="#FFF0B2"/>
+      <stop offset="1" stop-color="#A66D13"/>
+    </linearGradient>
+    <radialGradient id="lens" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(190 174) rotate(90) scale(74)">
+      <stop offset="0" stop-color="#FFF7CA"/>
+      <stop offset="0.22" stop-color="#F7D875"/>
+      <stop offset="0.5" stop-color="#C28A21"/>
+      <stop offset="0.78" stop-color="#7B4D12"/>
+      <stop offset="1" stop-color="#21150A"/>
+    </radialGradient>
+    <filter id="softShadow" x="20" y="14" width="1041" height="316" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+    <filter id="textGlow" x="315" y="64" width="740" height="248" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <path d="M190 38L266 70L318 136L306 221L247 292L160 308L84 266L49 185L72 100L190 38Z" fill="#16100A"/>
+    <path d="M190 38L266 70L318 136L306 221L247 292L160 308L84 266L49 185L72 100L190 38Z" stroke="url(#gold)" stroke-width="8" stroke-linejoin="round"/>
+
+    <path d="M190 55L221 128L166 116L130 71L190 55Z" fill="url(#gold)"/>
+    <path d="M251 81L222 154L193 108L205 58L251 81Z" fill="url(#gold)" opacity="0.92"/>
+    <path d="M303 142L230 171L244 116L281 94L303 142Z" fill="url(#gold)"/>
+    <path d="M294 215L221 185L267 156L314 167L294 215Z" fill="url(#gold)" opacity="0.92"/>
+    <path d="M239 278L210 205L264 218L282 249L239 278Z" fill="url(#gold)"/>
+    <path d="M162 292L190 219L219 265L209 304L162 292Z" fill="url(#gold)" opacity="0.93"/>
+    <path d="M78 260L150 232L136 286L105 278L78 260Z" fill="url(#gold)"/>
+    <path d="M61 183L134 154L105 200L60 224L61 183Z" fill="url(#gold)" opacity="0.93"/>
+    <path d="M83 102L157 132L110 160L64 150L83 102Z" fill="url(#gold)"/>
+
+    <circle cx="190" cy="174" r="75" fill="#120C07" stroke="#F4D875" stroke-width="5"/>
+    <circle cx="190" cy="174" r="54" fill="url(#lens)" stroke="#FFEAA1" stroke-width="3"/>
+    <circle cx="174" cy="153" r="19" fill="#FFF4C6" opacity="0.7"/>
+    <path d="M148 205C169 226 208 229 232 202" stroke="#FFE49A" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  </g>
+
+  <g filter="url(#textGlow)">
+    <text x="350" y="105" fill="#F8D97A" font-size="28" font-weight="800" letter-spacing="8" font-family="Inter, Montserrat, Arial, sans-serif">BY DK BOOK</text>
+    <text x="346" y="205" fill="url(#brightGold)" stroke="#4C2D08" stroke-width="1.4" paint-order="stroke" font-size="92" font-weight="950" letter-spacing="4" font-family="Inter, Montserrat, Arial Black, sans-serif">DK STUDIOS</text>
+    <path d="M350 229H1018" stroke="url(#deepGold)" stroke-width="3" stroke-linecap="round"/>
+    <text x="352" y="287" fill="url(#deepGold)" font-size="42" font-weight="600" letter-spacing="0" font-family="Segoe Script, Brush Script MT, cursive">Memories into Masterpieces</text>
+  </g>
+</svg>

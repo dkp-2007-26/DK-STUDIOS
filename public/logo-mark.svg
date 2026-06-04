@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DK STUDIOS mark</title>
+  <desc id="desc">Gold aperture mark for DK STUDIOS</desc>
+  <defs>
+    <linearGradient id="gold" x1="92" y1="66" x2="420" y2="446" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF3BA"/>
+      <stop offset="0.24" stop-color="#F0C85A"/>
+      <stop offset="0.49" stop-color="#B87818"/>
+      <stop offset="0.74" stop-color="#F4D16D"/>
+      <stop offset="1" stop-color="#805211"/>
+    </linearGradient>
+    <radialGradient id="lens" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 254) rotate(90) scale(112)">
+      <stop offset="0" stop-color="#FFF7CA"/>
+      <stop offset="0.24" stop-color="#F7D875"/>
+      <stop offset="0.53" stop-color="#C28A21"/>
+      <stop offset="0.82" stop-color="#7B4D12"/>
+      <stop offset="1" stop-color="#21150A"/>
+    </radialGradient>
+    <filter id="shadow" x="28" y="28" width="456" height="456" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M256 62L361 106L432 198L416 316L334 414L215 437L110 379L62 267L94 149L256 62Z" fill="#16100A"/>
+    <path d="M256 62L361 106L432 198L416 316L334 414L215 437L110 379L62 267L94 149L256 62Z" stroke="url(#gold)" stroke-width="13" stroke-linejoin="round"/>
+    <path d="M256 86L299 188L223 172L174 111L256 86Z" fill="url(#gold)"/>
+    <path d="M340 121L300 222L259 158L276 88L340 121Z" fill="url(#gold)" opacity="0.92"/>
+    <path d="M412 205L311 245L330 169L381 139L412 205Z" fill="url(#gold)"/>
+    <path d="M399 306L298 265L362 224L427 240L399 306Z" fill="url(#gold)" opacity="0.92"/>
+    <path d="M323 392L283 291L358 310L383 352L323 392Z" fill="url(#gold)"/>
+    <path d="M217 411L256 310L297 374L284 429L217 411Z" fill="url(#gold)" opacity="0.93"/>
+    <path d="M101 367L201 329L182 403L140 391L101 367Z" fill="url(#gold)"/>
+    <path d="M78 261L179 222L138 285L76 318L78 261Z" fill="url(#gold)" opacity="0.93"/>
+    <path d="M108 150L210 191L145 229L82 216L108 150Z" fill="url(#gold)"/>
+    <circle cx="256" cy="254" r="112" fill="#120C07" stroke="#F4D875" stroke-width="8"/>
+    <circle cx="256" cy="254" r="80" fill="url(#lens)" stroke="#FFEAA1" stroke-width="5"/>
+    <circle cx="232" cy="223" r="29" fill="#FFF4C6" opacity="0.7"/>
+    <path d="M195 301C225 332 282 336 317 297" stroke="#FFE49A" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
+  </g>
+</svg>

@@ -24,7 +24,7 @@ export default function Footer({ navigate }: FooterProps) {
               <img src={BRAND_LOGO_SRC} alt={BRAND_NAME} className="h-20 w-auto object-contain" />
             </button>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-400">
-              Photo editing, design, templates, and printed keepsakes with DK BOOK pickup and Razorpay checkout support.
+              Photo editing, design, templates, and printed keepsakes with secure checkout and in-store pickup support.
             </p>
             <button
               type="button"
@@ -100,7 +100,7 @@ export default function Footer({ navigate }: FooterProps) {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; {new Date().getFullYear()} {BRAND_NAME}. {PARENT_BRAND_LABEL}.</p>
-          <p>Google Drive uploads. DK BOOK Razorpay checkout.</p>
+          <p>Google Drive uploads. DK STUDIOS Razorpay checkout.</p>
         </div>
       </div>
     </footer>

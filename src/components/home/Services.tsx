@@ -42,7 +42,7 @@ export default function Services({ navigate }: ServicesProps) {
           </div>
           <div className="lg:max-w-xl lg:justify-self-end">
             <p className="text-base leading-8 text-stone-700">
-              Pick a service, upload photos, pay the advance through DK BOOK Razorpay, and track the order with your order id.
+              Pick a service, upload photos, pay the advance through DK STUDIOS Razorpay, and track the order with your order id.
             </p>
             <button
               type="button"

@@ -319,7 +319,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <p className={`mt-2 text-sm leading-6 ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
               {paymentIsPaid
                 ? "Your request is now visible to the studio. The final balance is collected at delivery after the work is complete."
-                : "Pay the Rs. 49 advance using DK BOOK's Razorpay account. The studio receives the request only after server signature verification."}
+                : "Pay the Rs. 49 advance using DK STUDIOS' Razorpay account. The studio receives the request only after server signature verification."}
             </p>
             {paymentError && (
               <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

@@ -1,6 +1,6 @@
 export const BRAND_NAME = "DK STUDIOS";
-export const PARENT_BRAND_NAME = "DK BOOK";
-export const PARENT_BRAND_LABEL = `By ${PARENT_BRAND_NAME}`;
+export const PARENT_BRAND_NAME = "DK STUDIOS";
+export const PARENT_BRAND_LABEL = "Official Razorpay checkout";
 export const BRAND_TAGLINE = "Memories into Masterpieces";
 export const BRAND_LOGO_SRC = "/logo.svg";
 export const BRAND_MARK_SRC = "/logo-mark.svg";

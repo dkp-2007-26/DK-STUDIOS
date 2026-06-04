@@ -463,7 +463,7 @@ async function createRazorpayCheckout(supabase, orderId) {
       notes: {
         dk_studios_order_id: order.id,
         bill_number: order.bill_number,
-        account: "DK BOOK",
+        account: "DK STUDIOS",
       },
     }),
   });

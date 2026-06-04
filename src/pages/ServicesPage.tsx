@@ -26,7 +26,7 @@ const categoryStyles: Record<string, string> = {
 
 const perks = [
   "Photo upload and order details in one flow",
-  "Advance payment through DK BOOK Razorpay",
+  "Advance payment through DK STUDIOS Razorpay",
   "Digital delivery with print pickup option",
   "Order-id tracking after order creation",
 ];

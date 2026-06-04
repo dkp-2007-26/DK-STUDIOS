@@ -4,7 +4,7 @@
 
 1. Customer creates a request on the website.
 2. Files upload to Google Drive.
-3. A fixed Rs. 49 online advance is required through DK BOOK Razorpay.
+3. A fixed Rs. 49 online advance is required through DK STUDIOS Razorpay.
 4. The studio/admin notification is sent after Razorpay signature verification.
 5. Admin opens the PC admin page, views order details, downloads original Drive files, downloads the bill, and uses the barcode.
 6. The DKSTUDIOS app supports admin and delivery staff roles from the same Supabase backend.

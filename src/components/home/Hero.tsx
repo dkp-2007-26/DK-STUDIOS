@@ -42,7 +42,7 @@ export default function Hero({ navigate }: HeroProps) {
             {BRAND_NAME}
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
-            Photo edits, poster designs, sketches, and printed keepsakes made with a clean order flow, secure uploads, and DK BOOK checkout support.
+            Photo edits, poster designs, sketches, and printed keepsakes made with a clean order flow, secure uploads, and DK STUDIOS checkout support.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">

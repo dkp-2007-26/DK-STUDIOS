@@ -1,6 +1,6 @@
-# Razorpay for DK STUDIOS by DK BOOK
+# Razorpay for DK STUDIOS
 
-This site uses the DK BOOK Razorpay account through the Netlify Studio API. The browser opens Razorpay Checkout, but the order is only marked paid after the server verifies the Razorpay signature.
+This site uses the DK STUDIOS Razorpay account through the Netlify Studio API. The browser opens Razorpay Checkout, but the order is only marked paid after the server verifies the Razorpay signature.
 
 ## Environment
 
@@ -15,7 +15,7 @@ Do not put `RAZORPAY_KEY_SECRET` in browser-visible `VITE_` variables. The key i
 
 ## Razorpay Dashboard
 
-1. Use the DK BOOK Razorpay account.
+1. Use the DK STUDIOS Razorpay account.
 2. Add the deployed website domain in Razorpay if domain whitelisting is enabled for the account.
 3. Create API keys in the same mode you want to test or run live.
 4. If webhooks are added later, point them at a Netlify function dedicated to Razorpay events.

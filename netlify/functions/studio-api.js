@@ -126,6 +126,11 @@ function toService(row) {
     base_price: Number(row.base_price ?? 0),
     print_price: Number(row.print_price ?? 0),
     category: row.category,
+    image_url: row.image_url,
+    source_url: row.source_url,
+    supplier: row.supplier,
+    supplier_label: row.supplier_label,
+    product_details: Array.isArray(row.product_details) ? row.product_details : [],
     is_active: row.is_active,
     sort_order: row.sort_order,
     created_at: row.created_at,
@@ -674,6 +679,13 @@ async function upsertService(supabase, body) {
     base_price: Number(body.basePrice ?? body.base_price ?? 0),
     print_price: Number(body.printPrice ?? body.print_price ?? 0),
     category: body.category || "print",
+    image_url: body.imageUrl ?? body.image_url ?? null,
+    source_url: body.sourceUrl ?? body.source_url ?? null,
+    supplier: body.supplier || null,
+    supplier_label: body.supplierLabel ?? body.supplier_label ?? null,
+    product_details: Array.isArray(body.productDetails ?? body.product_details)
+      ? body.productDetails ?? body.product_details
+      : [],
     is_active: Boolean(body.isActive ?? body.is_active ?? true),
     sort_order: Number(body.sortOrder ?? body.sort_order ?? 0),
   }, { onConflict: "code" });

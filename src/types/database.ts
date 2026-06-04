@@ -14,6 +14,11 @@ export interface Service {
   base_price: number;
   print_price: number;
   category: string;
+  image_url: string | null;
+  source_url: string | null;
+  supplier: string | null;
+  supplier_label: string | null;
+  product_details: string[];
   is_active: boolean;
   sort_order: number;
   created_at: string;

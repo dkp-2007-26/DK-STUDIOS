@@ -7,6 +7,7 @@ import { BRAND_NAME, BRAND_STORAGE_SLUG, PAYMENT_PROVIDER_NAME, SUPPORT_WHATSAPP
 import { downloadInvoicePdf } from "../lib/invoice";
 import { uploadFileToGoogleDrive } from "../lib/googleDrive";
 import { openRazorpayCheckout } from "../lib/razorpay";
+import { VISTAPRINT_LOGO_URL, displayServicePrice, isVistaprintService } from "../lib/serviceCatalog";
 import { addGlitchTipBreadcrumb, captureGlitchTipError } from "../lib/glitchtip";
 import type { Order, Service, Template } from "../types/database";
 import { useAsyncData } from "../hooks/useAsyncData";
@@ -102,6 +103,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
 
   const selectedService = services.find((service) => service.id === serviceId) ?? null;
   const selectedServiceIsPhotoFrame = isPhotoFrameService(selectedService);
+  const selectedServiceIsVistaprint = isVistaprintService(selectedService);
   const routedSupplier = deliveryType === "printed"
     ? selectedServiceIsPhotoFrame && frameFulfillmentTier === "local_standard" ? "Local standard" : "Vistaprint"
     : "Digital";
@@ -112,6 +114,12 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   const total = promoPreview?.total_amount ?? subtotal;
   const advance = MANDATORY_ADVANCE_AMOUNT;
   const balance = Math.max(total - advance, 0);
+
+  useEffect(() => {
+    if (!selectedServiceIsVistaprint) return;
+    setDeliveryType("printed");
+    setFulfillmentMethod("home_delivery");
+  }, [selectedServiceIsVistaprint, serviceId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -431,25 +439,43 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           <h2 className="text-2xl font-black text-stone-950">Choose your service</h2>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {services.map((service) => (
-              <button
-                key={service.id}
-                type="button"
-                onClick={() => setServiceId(service.id)}
-                className={`rounded-lg border p-4 text-left transition ${serviceId === service.id ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-slate-50 hover:border-stone-300"}`}
-              >
-                <p className="font-black text-stone-950">{service.name}</p>
-                <p className="mt-1 text-sm leading-6 text-stone-600">{service.description}</p>
-                <p className="mt-3 text-sm font-black text-[#8a5b12]">Rs. {service.base_price}</p>
-              </button>
-            ))}
+            {services.map((service) => {
+              const isVistaprint = isVistaprintService(service);
+              return (
+                <button
+                  key={service.id}
+                  type="button"
+                  onClick={() => setServiceId(service.id)}
+                  className={`overflow-hidden rounded-lg border text-left transition ${serviceId === service.id ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-slate-50 hover:border-stone-300"}`}
+                >
+                  {service.image_url && (
+                    <span className="block aspect-[16/9] overflow-hidden bg-stone-100">
+                      <img src={service.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    </span>
+                  )}
+                  <span className="block p-4">
+                    <span className="block font-black text-stone-950">{service.name}</span>
+                    <span className="mt-1 block text-sm leading-6 text-stone-600">{service.description}</span>
+                    <span className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm font-black text-[#8a5b12]">{displayServicePrice(service)}</span>
+                      {isVistaprint && (
+                        <span className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2 py-1">
+                          <span className="text-[10px] font-black uppercase tracking-wide text-stone-500">Powered by</span>
+                          <img src={VISTAPRINT_LOGO_URL} alt="VistaPrint" className="h-3.5 w-auto" loading="lazy" />
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Full name" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
             <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Phone number" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500" />
             <input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="Email address" className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
-            <select value={deliveryType} onChange={(event) => setDeliveryType(event.target.value as "digital" | "printed")} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500">
+            <select value={deliveryType} onChange={(event) => setDeliveryType(event.target.value as "digital" | "printed")} disabled={selectedServiceIsVistaprint} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 disabled:opacity-70">
               <option value="digital">Digital Delivery</option>
               <option value="printed">Printed Copy</option>
             </select>
@@ -494,11 +520,12 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
+                  disabled={selectedServiceIsVistaprint}
                   onClick={() => setFulfillmentMethod("pickup")}
-                  className={`rounded-lg border p-4 text-left transition ${fulfillmentMethod === "pickup" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
+                  className={`rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-55 ${fulfillmentMethod === "pickup" ? "border-[#d29b21] bg-amber-50" : "border-stone-200 bg-white hover:border-stone-300"}`}
                 >
                   <span className="inline-flex items-center gap-2 text-sm font-black text-stone-950"><Store size={17} /> In-store pickup</span>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">Collect from DK STUDIOS and pay the balance at pickup.</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">{selectedServiceIsVistaprint ? "Vistaprint catalog products use supplier-handled home delivery." : "Collect from DK STUDIOS and pay the balance at pickup."}</p>
                 </button>
                 <button
                   type="button"

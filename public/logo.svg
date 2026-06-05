@@ -1,6 +1,6 @@
 <svg width="1100" height="360" viewBox="0 0 1100 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">DK STUDIOS logo</title>
-  <desc id="desc">DK STUDIOS by DK BOOK with the tagline Memories into Masterpieces</desc>
+  <desc id="desc">DK STUDIOS logo with the tagline Memories into Masterpieces</desc>
   <defs>
     <linearGradient id="gold" x1="83" y1="38" x2="316" y2="304" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFF3BA"/>
@@ -57,7 +57,6 @@
   </g>
 
   <g filter="url(#textGlow)">
-    <text x="350" y="105" fill="#F8D97A" font-size="28" font-weight="800" letter-spacing="8" font-family="Inter, Montserrat, Arial, sans-serif">BY DK BOOK</text>
     <text x="346" y="205" fill="url(#brightGold)" stroke="#4C2D08" stroke-width="1.4" paint-order="stroke" font-size="92" font-weight="950" letter-spacing="4" font-family="Inter, Montserrat, Arial Black, sans-serif">DK STUDIOS</text>
     <path d="M350 229H1018" stroke="url(#deepGold)" stroke-width="3" stroke-linecap="round"/>
     <text x="352" y="287" fill="url(#deepGold)" font-size="42" font-weight="600" letter-spacing="0" font-family="Segoe Script, Brush Script MT, cursive">Memories into Masterpieces</text>

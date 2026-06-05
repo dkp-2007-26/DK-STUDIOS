@@ -24,10 +24,10 @@ export default function Contact() {
           <div>
             <p className="text-sm font-bold uppercase text-[#89d4d2]">Contact</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              Need a custom sketch or order help?
+              Message DK STUDIOS for custom work.
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-300">
-              Send a note, open WhatsApp, or call the store. For full orders, the checkout flow collects files and payment details.
+              Send a note, open WhatsApp, or call the studio. For full orders, the checkout flow collects files and payment details.
             </p>
 
             <div className="mt-8 grid gap-3">
@@ -54,14 +54,14 @@ export default function Contact() {
                 <MessageCircle size={20} className="text-emerald-300" />
                 <span>
                   <span className="block text-sm text-emerald-100/70">WhatsApp</span>
-                  <span className="font-bold text-emerald-100">Chat with DK BOOK</span>
+                  <span className="font-bold text-emerald-100">Chat with DK STUDIOS</span>
                 </span>
               </a>
               <div className="rounded-lg border border-white/12 bg-white/8 p-5">
                 <div className="flex items-start gap-4">
                   <MapPin size={20} className="mt-1 text-[#f7d880]" />
                   <div>
-                    <p className="font-bold text-white">DK BOOK Store</p>
+                    <p className="font-bold text-white">DK STUDIOS Pickup Point</p>
                     <p className="mt-2 text-sm leading-6 text-slate-400">Pickup available in-store for printed orders.</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <a href={MAPS_SHARE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-950">
@@ -79,66 +79,71 @@ export default function Contact() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/12 bg-white p-5 text-slate-950 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-7">
+          <div className="rounded-lg border border-white/12 bg-[#070a0f] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-7">
             {submitted ? (
               <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
                 <CheckCircle size={46} className="text-emerald-500" />
                 <h3 className="mt-5 text-2xl font-black">Message received</h3>
-                <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
+                <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
                   Thanks for contacting {BRAND_NAME}. We will reply with the next step.
                 </p>
                 <button
                   type="button"
                   onClick={() => setSubmitted(false)}
-                  className="mt-6 rounded-lg bg-slate-950 px-5 py-3 text-sm font-bold text-white"
+                  className="mt-6 rounded-lg bg-[#f1c75b] px-5 py-3 text-sm font-bold text-slate-950"
                 >
                   Send another message
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="grid gap-4">
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+                  <p className="text-xs font-black uppercase text-[#f7d880]">Message form</p>
+                  <h3 className="mt-2 text-2xl font-black text-white">Tell DK STUDIOS what you need.</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">Share your idea, print requirement, or order question. We will reply with the next step.</p>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Name
+                  <label className="grid gap-2 text-sm font-bold text-slate-200">
+                    Name :
                     <input
                       type="text"
                       required
                       value={form.name}
                       onChange={(event) => setForm({ ...form, name: event.target.value })}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                      className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
                       placeholder="Your name"
                     />
                   </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Phone
+                  <label className="grid gap-2 text-sm font-bold text-slate-200">
+                    Phone :
                     <input
                       type="tel"
                       value={form.phone}
                       onChange={(event) => setForm({ ...form, phone: event.target.value })}
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                      className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
                       placeholder="+91"
                     />
                   </label>
                 </div>
-                <label className="grid gap-2 text-sm font-bold text-slate-700">
-                  Email
+                <label className="grid gap-2 text-sm font-bold text-slate-200">
+                  Email :
                   <input
                     type="email"
                     required
                     value={form.email}
                     onChange={(event) => setForm({ ...form, email: event.target.value })}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                    className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
                     placeholder="you@example.com"
                   />
                 </label>
-                <label className="grid gap-2 text-sm font-bold text-slate-700">
-                  Message
+                <label className="grid gap-2 text-sm font-bold text-slate-200">
+                  Message :
                   <textarea
                     required
                     rows={6}
                     value={form.message}
                     onChange={(event) => setForm({ ...form, message: event.target.value })}
-                    className="resize-none rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-500"
+                    className="resize-none rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
                     placeholder="Tell us what you need"
                   />
                 </label>

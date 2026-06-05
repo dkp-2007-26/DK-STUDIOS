@@ -5,7 +5,7 @@ const MAPS_EMBED_URL = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d36
 
 const deliveryNotes = [
   { icon: PackageCheck, title: "Digital files", body: "Final files are shared after approval and payment verification." },
-  { icon: MapPin, title: "Printed orders", body: "Printed copies are collected at DK BOOK Store." },
+  { icon: MapPin, title: "Printed orders", body: "Printed copies are collected at the DK STUDIOS pickup point." },
   { icon: Truck, title: "Home delivery", body: "Available for supported Vistaprint-powered print products while pickup remains available for local work." },
 ];
 
@@ -61,7 +61,7 @@ export default function Delivery() {
           <div className="overflow-hidden rounded-lg border border-white/10 bg-[#101820] shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
             <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
               <div>
-                <p className="text-sm font-black">DK BOOK Store</p>
+                <p className="text-sm font-black">DK STUDIOS Pickup Point</p>
                 <p className="text-sm text-slate-300">Pickup counter for printed orders</p>
               </div>
               <MapPin size={20} className="text-[#f1c75b]" />
@@ -74,7 +74,7 @@ export default function Delivery() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="DK BOOK Store pickup location"
+                title="DK STUDIOS pickup location"
               />
             </div>
           </div>

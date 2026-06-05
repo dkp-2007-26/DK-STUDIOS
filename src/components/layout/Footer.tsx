@@ -75,7 +75,7 @@ export default function Footer({ navigate }: FooterProps) {
             <div className="mt-5 grid gap-4 text-sm text-slate-400">
               <span className="flex items-start gap-3">
                 <MapPin size={17} className="mt-1 text-[#f7d880]" />
-                DK BOOK Store, pickup available in-store
+                DK STUDIOS pickup point, pickup available in-store
               </span>
               <a href="tel:+918961338986" className="flex items-center gap-3 transition hover:text-[#f7d880]">
                 <Phone size={17} className="text-[#f7d880]" />

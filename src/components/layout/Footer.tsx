@@ -7,11 +7,11 @@ interface FooterProps {
 }
 
 const services = [
-  "Premium retouching",
+  "Photo retouching",
   "Digital sketch",
   "Custom sketch",
-  "Poster design",
-  "Vistaprint products",
+  "Poster making",
+  "Print products",
 ];
 
 export default function Footer({ navigate }: FooterProps) {
@@ -24,7 +24,7 @@ export default function Footer({ navigate }: FooterProps) {
               <img src={BRAND_LOGO_SRC} alt={BRAND_NAME} className="h-20 w-auto object-contain" />
             </button>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-400">
-              Photo editing, custom sketches, templates, and Vistaprint-powered products with secure checkout, pickup, and supported home delivery.
+              We make photo edits, sketches, posters, and print-ready files. Order online, show us your references, and choose pickup or delivery where available.
             </p>
             <button
               type="button"
@@ -37,7 +37,7 @@ export default function Footer({ navigate }: FooterProps) {
           </div>
 
           <div>
-            <h3 className="text-sm font-black uppercase text-white">Explore</h3>
+            <h3 className="text-sm font-black uppercase text-white">Links</h3>
             <ul className="mt-5 grid gap-3">
               {FOOTER_QUICK_LINKS.map((item) => (
                 <li key={item.page}>
@@ -75,7 +75,7 @@ export default function Footer({ navigate }: FooterProps) {
             <div className="mt-5 grid gap-4 text-sm text-slate-400">
               <span className="flex items-start gap-3">
                 <MapPin size={17} className="mt-1 text-[#f7d880]" />
-                DK STUDIOS pickup point, pickup available in-store
+                Pickup available at the store
               </span>
               <a href="tel:+918961338986" className="flex items-center gap-3 transition hover:text-[#f7d880]">
                 <Phone size={17} className="text-[#f7d880]" />
@@ -100,7 +100,7 @@ export default function Footer({ navigate }: FooterProps) {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; {new Date().getFullYear()} {BRAND_NAME}. {PARENT_BRAND_LABEL}.</p>
-          <p>Google Drive uploads. DK STUDIOS Razorpay checkout.</p>
+          <p>Your files are stored safely for the order. Payments are securely processed by Razorpay.</p>
         </div>
       </div>
     </footer>

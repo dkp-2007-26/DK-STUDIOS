@@ -42,10 +42,27 @@ export const FOOTER_QUICK_LINKS: Array<{ label: string; page: Page }> = [
   { label: 'Place Order', page: 'order' },
 ];
 
+export function routeToPage(value: string): Page {
+  const normalized = value
+    .replace(/^#/, '')
+    .replace(/^\/+|\/+$/g, '')
+    .split('?')[0]
+    .split('#')[0];
+  if (!normalized) return 'home';
+  if (normalized === 'portfolio') return 'spotlight';
+  return VALID_PAGES.includes(normalized as Page) ? (normalized as Page) : 'home';
+}
+
+export function currentRouteToPage(): Page {
+  return routeToPage(window.location.hash || window.location.pathname);
+}
+
+export function pageToPath(page: Page) {
+  return page === 'home' ? '/' : `/${page}`;
+}
+
 export function hashToPage(hash: string): Page {
-  const normalizedHash = hash.replace('#', '').replace('/', '');
-  if (normalizedHash === 'portfolio') return 'spotlight';
-  return VALID_PAGES.includes(normalizedHash as Page) ? (normalizedHash as Page) : 'home';
+  return routeToPage(hash);
 }
 
 export function isAdminPage(page: Page) {

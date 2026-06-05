@@ -199,4 +199,29 @@ export async function downloadFileFromGoogleDrive(fileId) {
   };
 }
 
+export async function deleteFileFromGoogleDrive(fileId) {
+  if (!fileId) return { deleted: false, skipped: true };
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${DRIVE_FILES_URL}/${encodeURIComponent(fileId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (response.status === 404) {
+    return { deleted: true, alreadyMissing: true };
+  }
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => "");
+    throw new GoogleDriveStorageError("Google Drive file deletion failed", {
+      status: response.status,
+      body: details.slice(0, 500),
+    });
+  }
+
+  return { deleted: true };
+}
+
 export { GoogleDriveStorageError };

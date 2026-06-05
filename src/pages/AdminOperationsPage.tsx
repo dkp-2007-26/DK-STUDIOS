@@ -147,6 +147,9 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
             <p className="mt-1 text-sm text-stone-600">{user?.email}</p>
           </div>
           <div className="flex gap-2">
+            <button type="button" onClick={() => navigate("order")} className="inline-flex items-center gap-2 rounded-lg bg-[#f1c75b] px-4 py-3 text-sm font-black text-stone-950">
+              <ShoppingBag size={16} /> Take in-shop order
+            </button>
             <button type="button" onClick={() => void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-stone-300 px-4 py-3 text-sm font-black">
               <RefreshCw size={16} /> Refresh
             </button>

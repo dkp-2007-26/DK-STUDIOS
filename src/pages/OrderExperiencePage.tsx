@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle, CreditCard, Home, MessageCircle, PackageCheck, Store, Tag } from "lucide-react";
+import { AlertCircle, CheckCircle, CreditCard, FileText, Home, MessageCircle, PackageCheck, Store, Tag } from "lucide-react";
 import PhotoUploadStudio, { type EditablePhotoAsset } from "../components/order/PhotoUploadStudio";
 import { useAuth } from "../context/AuthContext";
 import type { Page } from "../hooks/useRouter";
@@ -200,7 +200,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         total,
       });
 
-      const folderOwner = user?.id ?? `guest-${Date.now()}`;
+      const folderOwner = user ? `${user.id}-${Date.now()}` : `guest-${Date.now()}`;
       const folder = `${BRAND_STORAGE_SLUG}/orders/${folderOwner}`;
       const uploadedPhotos = await Promise.all(
         assets.map(async (asset, index) => {
@@ -398,7 +398,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
 
     return (
       <div className="min-h-screen bg-[#070a0f] px-4 pb-16 pt-28 text-white">
-        <div className="mx-auto max-w-2xl rounded-lg border border-white/10 bg-[#101820] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:p-8">
+        <div className="mx-auto max-w-4xl rounded-lg border border-white/10 bg-[#101820] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:p-8">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-lg bg-emerald-300/10 text-emerald-300">
             <CheckCircle size={36} />
           </div>
@@ -416,6 +416,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <Info label="Payment" value={paymentIsPaid ? "Paid" : "Pending"} dark />
             <Info label="Supplier" value={supplierLabel(createdOrder)} dark />
           </div>
+          <BillPreview order={createdOrder} paid={paymentIsPaid} />
           <div className={`mt-6 rounded-lg border p-4 text-left ${paymentIsPaid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
             <p className={`text-sm font-black ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
               {paymentIsPaid ? "Payment verified" : `${PAYMENT_PROVIDER_NAME} checkout is ready`}
@@ -474,7 +475,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.35fr,0.65fr]">
+        <div className={`grid gap-6 ${selectedService ? "lg:grid-cols-[1.35fr,0.65fr]" : ""}`}>
         <div className="rounded-lg border border-white/10 bg-[#101820] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:p-8">
           <h2 className="text-2xl font-black text-white">Choose your service</h2>
 
@@ -510,6 +511,34 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
               );
             })}
           </div>
+
+          {selectedService && (
+            <div className="mt-6 overflow-hidden rounded-lg border border-[#f1c75b]/25 bg-[#0b1118] shadow-[0_22px_70px_rgba(0,0,0,0.28)]">
+              <div className="grid gap-0 md:grid-cols-[0.42fr,0.58fr]">
+                {selectedService.image_url && (
+                  <div className="bg-black/25 p-4">
+                    <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[#06080c] p-3">
+                      <img src={selectedService.image_url} alt="" className="h-full w-full object-contain" loading="lazy" />
+                    </div>
+                  </div>
+                )}
+                <div className="p-5 text-left sm:p-6">
+                  <p className="text-xs font-black uppercase text-[#f7d880]">Selected service</p>
+                  <h3 className="mt-2 text-2xl font-black text-white">{selectedService.name}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-300">{selectedService.description}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <span className="rounded-lg border border-[#f1c75b]/25 bg-[#f1c75b]/10 px-3 py-2 text-sm font-black text-[#f7d880]">{displayServicePrice(selectedService)}</span>
+                    {selectedService.product_details.map((detail) => (
+                      <span key={detail} className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-bold text-slate-300">{detail}</span>
+                    ))}
+                  </div>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Continue below to add customer details, files, options, and checkout.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Full name" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
@@ -643,6 +672,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           </button>
         </div>
 
+        {selectedService && (
         <aside className="h-fit rounded-lg border border-white/10 bg-[#101820] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] lg:sticky lg:top-24">
           <p className="text-xs font-bold uppercase text-[#f7d880]">Order Summary</p>
           <h2 className="mt-2 text-2xl font-black text-white">{selectedService?.name ?? "Choose a service"}</h2>
@@ -678,8 +708,40 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             </div>
           )}
         </aside>
+        )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function BillPreview({ order, paid }: { order: Order; paid: boolean }) {
+  const balance = Math.max(order.total_amount - order.advance_amount, 0);
+  return (
+    <div className="mt-6 rounded-lg border border-white/10 bg-[#070a0f] p-5 text-left">
+      <div className="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="inline-flex items-center gap-2 text-xs font-black uppercase text-[#f7d880]"><FileText size={15} /> Bill preview</p>
+          <h2 className="mt-2 text-xl font-black text-white">{order.bill_number ?? "Bill pending"}</h2>
+        </div>
+        <span className={`rounded-lg px-3 py-2 text-xs font-black uppercase ${paid ? "bg-emerald-300/15 text-emerald-200" : "bg-amber-300/15 text-amber-200"}`}>
+          {paid ? "Advance paid" : "Advance pending"}
+        </span>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Info label="Subtotal" value={`Rs. ${order.subtotal_amount}`} dark />
+        <Info label="Total" value={`Rs. ${order.total_amount}`} highlight dark />
+        <Info label="Advance" value={`Rs. ${order.advance_amount}`} dark />
+        <Info label="Balance" value={`Rs. ${balance}`} dark />
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <Info label="Fulfillment" value={order.delivery_type === "printed" ? (order.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
+        <Info label="Supplier" value={supplierLabel(order)} dark />
+        <Info label="Files" value={`${order.photo_count} uploaded to Google Drive`} dark />
+      </div>
+      <p className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-6 text-slate-300">
+        Google Drive files stay available for studio work, then are scheduled for automatic deletion 1 hour after delivery or in-store pickup completion.
+      </p>
     </div>
   );
 }

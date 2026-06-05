@@ -13,6 +13,7 @@ initGlitchTip({ surface: "studio-api" });
 
 const barcodeBaseUrl = "https://quickchart.io/barcode";
 const mandatoryAdvanceAmount = 49;
+const fileDeletionDelayMs = 60 * 60 * 1000;
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -116,6 +117,15 @@ function toOrder(row) {
     qikink_error: row.qikink_error,
     created_at: row.created_at,
     updated_at: row.updated_at,
+  };
+}
+
+function scheduleFileDeletionPatch(now = new Date()) {
+  return {
+    file_retention_status: "scheduled",
+    files_deletion_scheduled_at: new Date(now.getTime() + fileDeletionDelayMs).toISOString(),
+    files_deletion_failed_at: null,
+    files_deletion_error: null,
   };
 }
 
@@ -663,10 +673,18 @@ async function adminSnapshot(supabase) {
 
 async function updateOrder(supabase, body) {
   const patch = {};
-  if (body.status) patch.status = body.status;
+  const now = new Date();
+  if (body.status) {
+    patch.status = body.status;
+    if (body.status === "completed") {
+      patch.completed_at = now.toISOString();
+      patch.pickup_completed_at = now.toISOString();
+      Object.assign(patch, scheduleFileDeletionPatch(now));
+    }
+  }
   if (body.paymentStatus) {
     patch.payment_status = body.paymentStatus;
-    patch.payment_completed_at = body.paymentStatus === "paid" ? new Date().toISOString() : null;
+    patch.payment_completed_at = body.paymentStatus === "paid" ? now.toISOString() : null;
   }
   if ("adminNotes" in body) patch.admin_notes = body.adminNotes || null;
   const { data, error } = await supabase.from("orders").update(patch).eq("id", body.orderId).select("*").single();
@@ -774,18 +792,20 @@ async function deliveryByBarcode(supabase, barcodeValue) {
 async function markDelivered(supabase, barcodeValue, staffEmail) {
   const order = await deliveryByBarcode(supabase, barcodeValue);
   if (!order) throw new SupabaseServerError("No order found for this barcode.", 404);
-  const now = new Date().toISOString();
+  const now = new Date();
+  const isoNow = now.toISOString();
   const { data, error } = await supabase
     .from("orders")
     .update({
       status: "completed",
-      delivered_at: now,
-      pickup_completed_at: now,
-      completed_at: order.completed_at || now,
+      delivered_at: isoNow,
+      pickup_completed_at: isoNow,
+      completed_at: order.completed_at || isoNow,
       delivery_verified_by: staffEmail,
-      customer_notified_at: now,
-      last_barcode_scanned_at: now,
+      customer_notified_at: isoNow,
+      last_barcode_scanned_at: isoNow,
       barcode_scan_count: (order.barcode_scan_count || 0) + 1,
+      ...scheduleFileDeletionPatch(now),
     })
     .eq("id", order.id)
     .select("*")

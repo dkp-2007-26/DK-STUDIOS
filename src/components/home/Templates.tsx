@@ -37,17 +37,17 @@ export default function Templates({ navigate }: TemplatesProps) {
     : templates.filter((template) => template.category === active).slice(0, 6);
 
   return (
-    <section id="templates" className="bg-[#f8fafc] py-20 text-slate-950 sm:py-24">
+    <section id="templates" className="bg-[#090d13] py-20 text-white sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.9fr,1.1fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase text-indigo-700">Template studio</p>
+            <p className="text-sm font-bold uppercase text-[#f1c75b]">Template studio</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
               Pick a layout, then make it personal.
             </h2>
           </div>
           <div>
-            <p className="max-w-2xl text-base leading-8 text-slate-600">
+            <p className="max-w-2xl text-base leading-8 text-slate-300">
               Templates are starting points for faster delivery. You can still add custom names, dates, wishes, and print instructions during checkout.
             </p>
             <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
@@ -58,8 +58,8 @@ export default function Templates({ navigate }: TemplatesProps) {
                   onClick={() => setActive(category)}
                   className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${
                     active === category
-                      ? "bg-slate-950 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                      ? "bg-[#f1c75b] text-[#090b10]"
+                      : "border border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/25"
                   }`}
                 >
                   {category}
@@ -77,10 +77,10 @@ export default function Templates({ navigate }: TemplatesProps) {
                 key={template.id}
                 type="button"
                 onClick={() => navigate("order")}
-                className="group overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-[0_18px_50px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:border-slate-300"
+                className="group overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition hover:-translate-y-1 hover:border-[#f1c75b]/45"
               >
-                <span className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
-                  <img src={template.image_url} alt={template.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                <span className="relative block aspect-[4/3] overflow-hidden bg-[#0b1118] p-3">
+                  <img src={template.image_url} alt={template.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.03]" />
                   {template.tag && (
                     <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-black ${tagStyles[template.tag] ?? "bg-white text-slate-900"}`}>
                       {template.tag}
@@ -88,15 +88,15 @@ export default function Templates({ navigate }: TemplatesProps) {
                   )}
                 </span>
                 <span className="block p-5">
-                  <span className="inline-flex items-center gap-2 text-sm font-bold text-indigo-700">
+                  <span className="inline-flex items-center gap-2 text-sm font-bold text-[#f1c75b]">
                     <Icon size={16} />
                     {template.category}
                   </span>
-                  <span className="mt-3 block text-lg font-black text-slate-950">{template.name}</span>
-                  <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                  <span className="mt-3 block text-lg font-black text-white">{template.name}</span>
+                  <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-300">
                     {template.description || "Use this design as a base for your order."}
                   </span>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-slate-950">
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#f1c75b]">
                     Use template
                     <ArrowRight size={16} className="transition group-hover:translate-x-1" />
                   </span>
@@ -110,7 +110,7 @@ export default function Templates({ navigate }: TemplatesProps) {
           <button
             type="button"
             onClick={() => navigate("templates")}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#f1c75b] px-5 py-3 text-sm font-bold text-[#090b10] transition hover:bg-white"
           >
             Browse all templates
             <ArrowRight size={16} />

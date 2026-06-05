@@ -35,25 +35,25 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
   const filtered = active === "All" ? templates : templates.filter((template) => template.category === active);
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] pb-16 pt-28 text-slate-950">
+    <main className="min-h-screen bg-[#070a0f] pb-16 pt-28 text-white">
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.9fr,1.1fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase text-indigo-700">Templates</p>
+            <p className="text-sm font-bold uppercase text-[#f1c75b]">Templates</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
               Ready-made design bases for faster custom orders.
             </h1>
           </div>
           <div>
-            <p className="max-w-2xl text-base leading-8 text-slate-600">
-              Select a template, add names, dates, messages, and photos during checkout. Custom designs are still available.
+            <p className="max-w-2xl text-base leading-8 text-slate-300">
+              Select a template, add names, dates, messages, and photos during checkout. For made-from-idea artwork, choose Custom Sketch in services.
             </p>
             <button
               type="button"
               onClick={() => navigate("order")}
-              className="mt-6 inline-flex items-center gap-3 rounded-lg bg-slate-950 px-6 py-4 text-sm font-black text-white transition hover:bg-slate-800"
+              className="mt-6 inline-flex items-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-[#090b10] transition hover:bg-white"
             >
-              Request custom design
+              Start order
               <ArrowRight size={18} />
             </button>
           </div>
@@ -67,8 +67,8 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
               onClick={() => setActive(category)}
               className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${
                 active === category
-                  ? "bg-slate-950 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                  ? "bg-[#f1c75b] text-[#090b10]"
+                  : "border border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/25"
               }`}
             >
               {category}
@@ -84,10 +84,10 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
                 key={template.id}
                 type="button"
                 onClick={() => navigate("order")}
-                className="group overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-[0_18px_50px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:border-slate-300"
+                className="group overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition hover:-translate-y-1 hover:border-[#f1c75b]/45"
               >
-                <span className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
-                  <img src={template.image_url} alt={template.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                <span className="relative block aspect-[4/3] overflow-hidden bg-[#0b1118] p-3">
+                  <img src={template.image_url} alt={template.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.03]" />
                   {template.tag && (
                     <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-black ${tagStyles[template.tag] ?? "bg-white text-slate-900"}`}>
                       {template.tag}
@@ -95,15 +95,15 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
                   )}
                 </span>
                 <span className="block p-5">
-                  <span className="inline-flex items-center gap-2 text-sm font-bold text-indigo-700">
+                  <span className="inline-flex items-center gap-2 text-sm font-bold text-[#f1c75b]">
                     <Icon size={16} />
                     {template.category}
                   </span>
-                  <span className="mt-3 block text-lg font-black text-slate-950">{template.name}</span>
-                  <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                  <span className="mt-3 block text-lg font-black text-white">{template.name}</span>
+                  <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-300">
                     {template.description || "Use this design as a base for your order."}
                   </span>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-slate-950">
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#f1c75b]">
                     Use template
                     <ArrowRight size={16} className="transition group-hover:translate-x-1" />
                   </span>

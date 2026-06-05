@@ -21,6 +21,7 @@ export default function AppRoutes({ page, navigate, onOpenAuth }: AppRoutesProps
   switch (page) {
     case 'services':
       return <ServicesPage navigate={navigate} />;
+    case 'spotlight':
     case 'portfolio':
       return <PortfolioPage navigate={navigate} />;
     case 'templates':

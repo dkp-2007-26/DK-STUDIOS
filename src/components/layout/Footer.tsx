@@ -7,11 +7,11 @@ interface FooterProps {
 }
 
 const services = [
-  "Birthday photo edits",
-  "Anniversary artwork",
-  "Pencil and color sketch",
+  "Premium retouching",
+  "Digital sketch",
+  "Custom sketch",
   "Poster design",
-  "A4 print pickup",
+  "Vistaprint products",
 ];
 
 export default function Footer({ navigate }: FooterProps) {
@@ -24,7 +24,7 @@ export default function Footer({ navigate }: FooterProps) {
               <img src={BRAND_LOGO_SRC} alt={BRAND_NAME} className="h-20 w-auto object-contain" />
             </button>
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-400">
-              Photo editing, design, templates, and printed keepsakes with secure checkout and in-store pickup support.
+              Photo editing, custom sketches, templates, and Vistaprint-powered products with secure checkout, pickup, and supported home delivery.
             </p>
             <button
               type="button"

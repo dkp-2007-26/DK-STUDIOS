@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, Send, X, ZoomIn } from "lucide-react";
 import { type Page } from "../hooks/useRouter";
 import { portfolioCategories, portfolioItems } from "../lib/showcase";
 
@@ -10,6 +10,8 @@ interface PortfolioPageProps {
 export default function PortfolioPage({ navigate }: PortfolioPageProps) {
   const [active, setActive] = useState("All");
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [featuredForm, setFeaturedForm] = useState({ name: "", email: "", designTitle: "", orderId: "", note: "" });
+  const [featuredSubmitted, setFeaturedSubmitted] = useState(false);
 
   const filtered = active === "All" ? portfolioItems : portfolioItems.filter((item) => item.category === active);
   const lightboxIndex = lightbox !== null ? filtered.findIndex((item) => item.id === lightbox) : -1;
@@ -20,14 +22,14 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.9fr,1.1fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase text-[#89d4d2]">Portfolio</p>
+            <p className="text-sm font-bold uppercase text-[#89d4d2]">Spotlight</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
-              Work samples across events, portraits, posters, and sketches.
+              Featured designs, portraits, posters, and sketches.
             </h1>
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-slate-300">
-              Browse the current gallery, preview full images, and start an order when you find the direction you like.
+              Browse the current spotlight, preview full images, and start an order when you find the direction you like.
             </p>
             <button
               type="button"
@@ -67,7 +69,7 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
                 item.aspect === "tall" ? "sm:row-span-2" : item.aspect === "wide" ? "sm:col-span-2" : ""
               }`}
             >
-              <img src={item.img} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+              <img src={item.img} alt={item.title} className="h-full w-full object-contain p-3 transition duration-500 group-hover:scale-[1.03]" />
               <span className="absolute inset-0 bg-gradient-to-t from-black/84 via-black/18 to-transparent opacity-90" />
               <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-950">
                 {item.category}
@@ -80,6 +82,87 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
               </span>
             </button>
           ))}
+        </div>
+
+        <div className="mt-12 grid gap-6 rounded-lg border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:grid-cols-[0.8fr,1.2fr] lg:p-7">
+          <div>
+            <p className="text-sm font-bold uppercase text-[#f1c75b]">Get featured</p>
+            <h2 className="mt-3 text-3xl font-black leading-tight text-white">
+              Loved your final design?
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              Share your details and get a chance to be featured on the DK STUDIOS website with your design.
+            </p>
+          </div>
+
+          {featuredSubmitted ? (
+            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-6 text-center">
+              <CheckCircle2 size={42} className="text-emerald-300" />
+              <h3 className="mt-4 text-2xl font-black text-white">Submission received</h3>
+              <p className="mt-3 max-w-md text-sm leading-6 text-emerald-100/80">
+                We will review the design and contact you before featuring anything publicly.
+              </p>
+              <button
+                type="button"
+                onClick={() => setFeaturedSubmitted(false)}
+                className="mt-5 rounded-lg border border-white/15 px-5 py-3 text-sm font-black text-white transition hover:border-[#f1c75b]"
+              >
+                Submit another
+              </button>
+            </div>
+          ) : (
+            <form
+              className="grid gap-4 sm:grid-cols-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setFeaturedSubmitted(true);
+              }}
+            >
+              <input
+                required
+                value={featuredForm.name}
+                onChange={(event) => setFeaturedForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="Your name"
+                className="rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
+              />
+              <input
+                required
+                type="email"
+                value={featuredForm.email}
+                onChange={(event) => setFeaturedForm((current) => ({ ...current, email: event.target.value }))}
+                placeholder="Email address"
+                className="rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
+              />
+              <input
+                required
+                value={featuredForm.designTitle}
+                onChange={(event) => setFeaturedForm((current) => ({ ...current, designTitle: event.target.value }))}
+                placeholder="Design title"
+                className="rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
+              />
+              <input
+                value={featuredForm.orderId}
+                onChange={(event) => setFeaturedForm((current) => ({ ...current, orderId: event.target.value }))}
+                placeholder="Order ID (optional)"
+                className="rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
+              />
+              <textarea
+                required
+                rows={5}
+                value={featuredForm.note}
+                onChange={(event) => setFeaturedForm((current) => ({ ...current, note: event.target.value }))}
+                placeholder="Tell us what you liked about the design"
+                className="resize-none rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b] sm:col-span-2"
+              />
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-[#090b10] transition hover:bg-white sm:col-span-2"
+              >
+                Submit for spotlight
+                <Send size={17} />
+              </button>
+            </form>
+          )}
         </div>
       </section>
 

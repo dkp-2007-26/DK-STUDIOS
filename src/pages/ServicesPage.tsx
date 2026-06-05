@@ -18,11 +18,11 @@ const categoryIcons: Record<string, LucideIcon> = {
 };
 
 const categoryStyles: Record<string, string> = {
-  editing: "bg-rose-50 text-rose-700 border-rose-200",
-  retouching: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  sketch: "bg-amber-50 text-amber-700 border-amber-200",
-  design: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  print: "bg-violet-50 text-violet-700 border-violet-200",
+  editing: "border-rose-300/20 bg-rose-300/10 text-rose-100",
+  retouching: "border-cyan-300/20 bg-cyan-300/10 text-cyan-100",
+  sketch: "border-amber-300/20 bg-amber-300/10 text-amber-100",
+  design: "border-emerald-300/20 bg-emerald-300/10 text-emerald-100",
+  print: "border-violet-300/20 bg-violet-300/10 text-violet-100",
 };
 
 const perks = [
@@ -39,23 +39,23 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
   );
 
   return (
-    <main className="min-h-screen bg-[#f7f2e8] pb-16 pt-28 text-stone-950">
+    <main className="min-h-screen bg-[#070a0f] pb-16 pt-28 text-white">
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.9fr,1.1fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase text-[#8a5b12]">Services</p>
+            <p className="text-sm font-bold uppercase text-[#f1c75b]">Services</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
-              Clear options for retouching, digital sketches, posters, and prints.
+              Premium creative services, finished with a sharper eye.
             </h1>
           </div>
           <div>
-            <p className="max-w-2xl text-base leading-8 text-stone-700">
-              Choose the work you need, select product options, upload your final design or photo, and pay the advance securely.
+            <p className="max-w-2xl text-base leading-8 text-slate-300">
+              Choose retouching, digital sketches, custom sketch work, photo frames, or Vistaprint-powered products with clear options and secure advance payment.
             </p>
             <button
               type="button"
               onClick={() => navigate("order")}
-              className="mt-6 inline-flex items-center gap-3 rounded-lg bg-stone-950 px-6 py-4 text-sm font-black text-white transition hover:bg-stone-800"
+              className="mt-6 inline-flex items-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-[#090b10] transition hover:bg-white"
             >
               Place order
               <ArrowRight size={18} />
@@ -65,9 +65,9 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
 
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {perks.map((perk) => (
-            <div key={perk} className="flex items-start gap-3 rounded-lg border border-stone-300 bg-white p-4">
-              <CheckCircle2 size={18} className="mt-0.5 text-emerald-600" />
-              <p className="text-sm font-semibold leading-6 text-stone-700">{perk}</p>
+            <div key={perk} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <CheckCircle2 size={18} className="mt-0.5 text-[#f1c75b]" />
+              <p className="text-sm font-semibold leading-6 text-slate-300">{perk}</p>
             </div>
           ))}
         </div>
@@ -75,18 +75,18 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
         <div className="mt-10 grid gap-5 lg:grid-cols-2">
           {services.map((service) => {
             const Icon = categoryIcons[service.category] || Sparkles;
-            const style = categoryStyles[service.category] || "bg-gold-50 text-gold-700 border-gold-200";
+            const style = categoryStyles[service.category] || "border-[#f1c75b]/25 bg-[#f1c75b]/10 text-[#f1c75b]";
             const isVistaprint = isVistaprintService(service);
             return (
               <button
                 key={service.id}
                 type="button"
                 onClick={() => navigate("order")}
-                className="group overflow-hidden rounded-lg border border-stone-200 bg-white text-left shadow-[0_18px_50px_rgba(52,36,10,0.08)] transition hover:-translate-y-1 hover:border-stone-300"
+                className="group overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_24px_80px_rgba(0,0,0,0.34)] transition hover:-translate-y-1 hover:border-[#f1c75b]/45"
               >
                 {service.image_url && (
-                  <span className="block aspect-[16/9] overflow-hidden bg-stone-100">
-                    <img src={service.image_url} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+                  <span className="block aspect-[16/10] overflow-hidden bg-[#0b1118] p-4">
+                    <img src={service.image_url} alt="" className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]" loading="lazy" />
                   </span>
                 )}
                 <div className="flex gap-5 p-5">
@@ -94,29 +94,29 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
                     <Icon size={25} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-xl font-black text-stone-950">{service.name}</span>
-                    <span className="mt-2 block text-sm leading-6 text-stone-600">{service.description}</span>
+                    <span className="block text-xl font-black text-white">{service.name}</span>
+                    <span className="mt-2 block text-sm leading-6 text-slate-300">{service.description}</span>
                     {service.product_details.length > 0 && (
                       <span className="mt-4 flex flex-wrap gap-2">
                         {service.product_details.slice(0, 3).map((detail) => (
-                          <span key={detail} className="rounded-lg bg-stone-100 px-3 py-1 text-xs font-bold text-stone-600">{detail}</span>
+                          <span key={detail} className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-bold text-slate-300">{detail}</span>
                         ))}
                       </span>
                     )}
                     {isVistaprint && (
-                      <span className="mt-4 inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-                        <span className="text-[10px] font-black uppercase tracking-wide text-stone-500">Powered by</span>
+                      <span className="mt-4 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white px-3 py-2">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Powered by</span>
                         <img src={VISTAPRINT_LOGO_URL} alt="VistaPrint" className="h-4 w-auto" loading="lazy" />
                       </span>
                     )}
                     <span className="mt-5 flex flex-wrap items-center justify-between gap-4">
                       <span>
-                        <span className="block text-2xl font-black text-stone-950">{displayServicePrice(service)}</span>
+                        <span className="block text-2xl font-black text-[#f1c75b]">{displayServicePrice(service)}</span>
                         {service.print_price > 0 && (
-                          <span className="text-sm text-stone-500">Rs. {service.base_price + service.print_price} with print</span>
+                          <span className="text-sm text-slate-400">Rs. {service.base_price + service.print_price} with print</span>
                         )}
                       </span>
-                      <span className="inline-flex items-center gap-2 rounded-lg bg-stone-950 px-4 py-3 text-sm font-black text-white transition group-hover:bg-[#d29b21] group-hover:text-stone-950">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-[#f1c75b] px-4 py-3 text-sm font-black text-[#090b10] transition group-hover:bg-white">
                         Order
                         <ArrowRight size={16} />
                       </span>

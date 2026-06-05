@@ -24,7 +24,7 @@ export default function Contact() {
           <div>
             <p className="text-sm font-bold uppercase text-[#89d4d2]">Contact</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              Need a custom design or order help?
+              Need a custom sketch or order help?
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-300">
               Send a note, open WhatsApp, or call the store. For full orders, the checkout flow collects files and payment details.

@@ -19,21 +19,21 @@ export default function Portfolio({ navigate }: PortfolioProps) {
   const lightboxItem = lightboxIndex >= 0 ? filtered[lightboxIndex] : null;
 
   return (
-    <section id="portfolio" className="bg-[#101820] py-20 text-white sm:py-24">
+    <section id="spotlight" className="bg-[#101820] py-20 text-white sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm font-bold uppercase text-[#89d4d2]">Recent work</p>
+            <p className="text-sm font-bold uppercase text-[#89d4d2]">Spotlight</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              A portfolio built around celebrations, portraits, and print-ready designs.
+              Featured work from portraits, sketches, and print-ready designs.
             </h2>
           </div>
           <button
             type="button"
-            onClick={() => navigate("portfolio")}
+            onClick={() => navigate("spotlight")}
             className="inline-flex w-fit items-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-sm font-bold text-white transition hover:border-white/40 hover:bg-white/10"
           >
-            Open gallery
+            Open spotlight
             <ArrowRight size={16} />
           </button>
         </div>
@@ -65,7 +65,7 @@ export default function Portfolio({ navigate }: PortfolioProps) {
                 item.aspect === "tall" ? "sm:row-span-2" : item.aspect === "wide" ? "sm:col-span-2" : ""
               }`}
             >
-              <img src={item.img} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+              <img src={item.img} alt={item.title} className="h-full w-full object-contain p-3 transition duration-500 group-hover:scale-[1.03]" />
               <span className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/18 to-transparent opacity-90" />
               <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-stone-950">
                 {item.category}

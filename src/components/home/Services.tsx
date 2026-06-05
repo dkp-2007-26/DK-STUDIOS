@@ -32,23 +32,23 @@ export default function Services({ navigate }: ServicesProps) {
   );
 
   return (
-    <section id="services" className="bg-[#f7f2e8] py-20 text-[#151515] sm:py-24">
+    <section id="services" className="bg-[#070a0f] py-20 text-white sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.82fr,1.18fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase text-[#8a5b12]">Studio menu</p>
+            <p className="text-sm font-bold uppercase text-[#f1c75b]">Studio menu</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
               Digital edits and printed products people can order without confusion.
             </h2>
           </div>
           <div className="lg:max-w-xl lg:justify-self-end">
-            <p className="text-base leading-8 text-stone-700">
+            <p className="text-base leading-8 text-slate-300">
               Choose retouching, a colour or black and white digital sketch, poster work, or a Vistaprint-powered product. Upload the final file, pay the advance, and track the order with your order id.
             </p>
             <button
               type="button"
               onClick={() => navigate("services")}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-bold text-stone-900 transition hover:border-stone-500"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:border-[#f1c75b]/70 hover:bg-white/15"
             >
               See all services
               <ArrowRight size={16} />
@@ -66,33 +66,33 @@ export default function Services({ navigate }: ServicesProps) {
                 key={service.id}
                 type="button"
                 onClick={() => navigate("order")}
-                className="group flex min-h-[254px] flex-col overflow-hidden rounded-lg border border-stone-200 bg-white text-left shadow-[0_18px_50px_rgba(52,36,10,0.08)] transition hover:-translate-y-1 hover:border-stone-300"
+                className="group flex min-h-[310px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_26px_70px_rgba(0,0,0,0.28)] transition hover:-translate-y-1 hover:border-[#f1c75b]/60"
               >
                 {service.image_url && (
-                  <span className="block aspect-[4/3] overflow-hidden bg-stone-100">
-                    <img src={service.image_url} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy" />
+                  <span className="block aspect-[4/3] overflow-hidden bg-[#0b1118] p-3">
+                    <img src={service.image_url} alt="" className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]" loading="lazy" />
                   </span>
                 )}
                 <span className="flex flex-1 flex-col p-5">
                   <span className={`mb-5 inline-flex h-11 w-11 items-center justify-center rounded-lg border ${style}`}>
                     <Icon size={21} />
                   </span>
-                  <span className="text-lg font-black text-stone-950">{service.name}</span>
-                  <span className="mt-3 line-clamp-3 text-sm leading-6 text-stone-600">{service.description}</span>
+                  <span className="text-lg font-black text-white">{service.name}</span>
+                  <span className="mt-3 line-clamp-3 text-sm leading-6 text-slate-300">{service.description}</span>
                   {isVistaprint && (
-                    <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-                      <span className="text-[10px] font-black uppercase tracking-wide text-stone-500">Powered by</span>
+                    <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg border border-sky-300/20 bg-sky-400/10 px-3 py-2">
+                      <span className="text-[10px] font-black uppercase tracking-wide text-slate-300">Powered by</span>
                       <img src={VISTAPRINT_LOGO_URL} alt="VistaPrint" className="h-4 w-auto" loading="lazy" />
                     </span>
                   )}
                   <span className="mt-auto flex items-end justify-between pt-5">
                     <span>
-                      <span className="block text-xl font-black text-stone-950">{displayServicePrice(service)}</span>
+                      <span className="block text-xl font-black text-[#f7d880]">{displayServicePrice(service)}</span>
                       {service.print_price > 0 && (
-                        <span className="text-xs font-medium text-stone-500">print add-on available</span>
+                        <span className="text-xs font-medium text-slate-400">print add-on available</span>
                       )}
                     </span>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-950 text-white transition group-hover:bg-[#d29b21] group-hover:text-stone-950">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f1c75b] text-stone-950 transition group-hover:bg-[#ffdc73]">
                       <ArrowRight size={16} />
                     </span>
                   </span>
@@ -103,8 +103,8 @@ export default function Services({ navigate }: ServicesProps) {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          {["Birthday edits", "Sketches", "Poster design", "A4 printing", "Retouching"].map((item) => (
-            <span key={item} className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700">
+          {["Retouching", "Digital sketch", "Custom sketch", "Poster design", "Vistaprint products"].map((item) => (
+            <span key={item} className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-slate-300">
               {item}
             </span>
           ))}

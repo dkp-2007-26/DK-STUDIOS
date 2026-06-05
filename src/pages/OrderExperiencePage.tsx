@@ -71,6 +71,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   const [assets, setAssets] = useState<EditablePhotoAsset[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [productOptions, setProductOptions] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ name: "", email: "", phone: "", instructions: "", personalizationText: "" });
   const [shipping, setShipping] = useState({
     name: "",
@@ -114,6 +115,16 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   const total = promoPreview?.total_amount ?? subtotal;
   const advance = MANDATORY_ADVANCE_AMOUNT;
   const balance = Math.max(total - advance, 0);
+
+  useEffect(() => {
+    if (!selectedService?.product_options.length) {
+      setProductOptions({});
+      return;
+    }
+    setProductOptions(Object.fromEntries(
+      selectedService.product_options.map((option) => [option.key, option.values[0] ?? ""]),
+    ));
+  }, [selectedService]);
 
   useEffect(() => {
     if (!selectedServiceIsVistaprint) return;
@@ -194,6 +205,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         frameSize: "A4",
         collagePreference: "make_for_me",
         personalizationText: form.personalizationText || null,
+        productOptions,
         photoCount: assets.length,
         photoNames: assets.map((asset) => asset.file.name),
         photoAssets: uploadedPhotos,
@@ -233,6 +245,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           fulfillmentMethod,
           frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
           supplier: routedSupplier,
+          productOptions,
           assetCount: assets.length,
           hasPromo: Boolean(appliedPromoCode),
           total,
@@ -489,6 +502,28 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <textarea value={form.instructions} onChange={(event) => setForm((current) => ({ ...current, instructions: event.target.value }))} placeholder="Special instructions" rows={4} className="rounded-lg border border-stone-200 bg-slate-50 px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500 sm:col-span-2" />
           </div>
 
+          {selectedService?.product_options.length ? (
+            <div className="mt-6 rounded-lg border border-stone-200 bg-slate-50 p-4">
+              <p className="text-xs font-bold uppercase text-stone-500">Product options</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {selectedService.product_options.map((option) => (
+                  <label key={option.key} className="block">
+                    <span className="text-xs font-black uppercase text-stone-500">{option.label}</span>
+                    <select
+                      value={productOptions[option.key] ?? option.values[0] ?? ""}
+                      onChange={(event) => setProductOptions((current) => ({ ...current, [option.key]: event.target.value }))}
+                      className="mt-2 w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-950 outline-none transition focus:border-stone-500"
+                    >
+                      {option.values.map((value) => (
+                        <option key={value} value={value}>{value}</option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {deliveryType === "printed" && (
             <div className="mt-6 rounded-lg border border-stone-200 bg-slate-50 p-4">
               <p className="text-xs font-bold uppercase text-stone-500">Supplier and fulfillment</p>
@@ -592,6 +627,16 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <Info label="Supplier" value={routedSupplier} dark />
             <Info label="Prepared files" value={`${assets.length}`} dark />
           </div>
+          {selectedService?.product_options.length ? (
+            <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
+              <span className="font-black text-[#f7d880]">Selected options</span>
+              <div className="mt-3 space-y-2">
+                {selectedService.product_options.map((option) => (
+                  <Info key={option.key} label={option.label} value={productOptions[option.key] ?? "-"} dark />
+                ))}
+              </div>
+            </div>
+          ) : null}
           {deliveryType === "printed" && (
             <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
               <span className="inline-flex items-center gap-2 font-black text-[#f7d880]"><PackageCheck size={16} /> Supplier route</span>

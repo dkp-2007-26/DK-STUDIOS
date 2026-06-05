@@ -61,6 +61,7 @@ function toOrder(row) {
     frame_size: row.frame_size,
     collage_preference: row.collage_preference,
     personalization_text: row.personalization_text,
+    product_options: row.product_options ?? null,
     photo_count: row.photo_count ?? 0,
     photo_names: row.photo_names ?? [],
     google_drive_folder_id: row.google_drive_folder_id,
@@ -131,6 +132,7 @@ function toService(row) {
     supplier: row.supplier,
     supplier_label: row.supplier_label,
     product_details: Array.isArray(row.product_details) ? row.product_details : [],
+    product_options: Array.isArray(row.product_options) ? row.product_options : [],
     is_active: row.is_active,
     sort_order: row.sort_order,
     created_at: row.created_at,
@@ -415,6 +417,7 @@ async function createOrder(supabase, body) {
       frame_size: body.frameSize || null,
       collage_preference: body.collagePreference || null,
       personalization_text: body.personalizationText || null,
+      product_options: body.productOptions && typeof body.productOptions === "object" ? body.productOptions : null,
       photo_count: Number(body.photoCount || photoAssets.length || 0),
       photo_names: Array.isArray(body.photoNames) ? body.photoNames : [],
       google_drive_folder_id: photoAssets[0]?.googleDriveFolderId || null,
@@ -685,6 +688,9 @@ async function upsertService(supabase, body) {
     supplier_label: body.supplierLabel ?? body.supplier_label ?? null,
     product_details: Array.isArray(body.productDetails ?? body.product_details)
       ? body.productDetails ?? body.product_details
+      : [],
+    product_options: Array.isArray(body.productOptions ?? body.product_options)
+      ? body.productOptions ?? body.product_options
       : [],
     is_active: Boolean(body.isActive ?? body.is_active ?? true),
     sort_order: Number(body.sortOrder ?? body.sort_order ?? 0),

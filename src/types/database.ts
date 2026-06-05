@@ -1,3 +1,11 @@
+export type ProductOption = {
+  key: string;
+  label: string;
+  type: "select";
+  values: string[];
+  required?: boolean;
+};
+
 export interface Profile {
   id: string;
   display_name: string | null;
@@ -19,6 +27,7 @@ export interface Service {
   supplier: string | null;
   supplier_label: string | null;
   product_details: string[];
+  product_options: ProductOption[];
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -46,6 +55,7 @@ export interface Order {
   frame_size: string | null;
   collage_preference: string | null;
   personalization_text: string | null;
+  product_options: Record<string, string> | null;
   photo_count: number;
   photo_names: string[];
   google_drive_folder_id: string | null;

@@ -1,4 +1,4 @@
-import type { Page } from './router';
+import type { NavigateTo, Page } from './router';
 import Home from '../pages/Home';
 import ServicesPage from '../pages/ServicesPage';
 import PortfolioPage from '../pages/PortfolioPage';
@@ -14,7 +14,7 @@ import ResetPasswordPage from '../pages/ResetPasswordPage';
 
 interface AppRoutesProps {
   page: Page;
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
   onOpenAuth: (mode: 'login' | 'forgot') => void;
 }
 

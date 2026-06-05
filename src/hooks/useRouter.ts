@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { currentRouteToPage, pageToPath, type Page } from '../app/router';
-export type { Page } from '../app/router';
+import { currentRouteToPage, pageToPath, type NavigateOptions, type Page } from '../app/router';
+export type { NavigateOptions, NavigateTo, Page } from '../app/router';
 
 export function useRouter() {
   const [page, setPage] = useState<Page>(() => currentRouteToPage());
@@ -26,8 +26,8 @@ export function useRouter() {
     };
   }, []);
 
-  const navigate = (to: Page) => {
-    window.history.pushState(null, '', pageToPath(to));
+  const navigate = (to: Page, options?: NavigateOptions) => {
+    window.history.pushState(null, '', pageToPath(to, options));
     setPage(to);
   };
 

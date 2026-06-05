@@ -1,12 +1,12 @@
 import { ArrowRight, Cake, Camera, FileImage, Pencil, Printer, Sparkles, type LucideIcon } from "lucide-react";
-import { type Page } from "../../hooks/useRouter";
+import { type NavigateTo } from "../../hooks/useRouter";
 import { type Service } from "../../types/database";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { loadPublicSnapshot } from "../../lib/studioApi";
 import { VISTAPRINT_LOGO_URL, displayServicePrice, isVistaprintService } from "../../lib/serviceCatalog";
 
 interface ServicesProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -38,12 +38,12 @@ export default function Services({ navigate }: ServicesProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#f1c75b]">Studio menu</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              Digital edits and printed products people can order without confusion.
+              Pick what you need. We'll keep it simple.
             </h2>
           </div>
           <div className="lg:max-w-xl lg:justify-self-end">
             <p className="text-base leading-8 text-slate-300">
-              Choose retouching, a colour or black and white digital sketch, poster work, or a Vistaprint-powered product. Upload the final file, pay the advance, and track the order with your order id.
+              Choose photo retouching, a colour or black and white digital sketch, a custom sketch from your idea, poster work, or a printed product. Upload what you have, book the order, and keep your order id handy.
             </p>
             <button
               type="button"
@@ -65,7 +65,7 @@ export default function Services({ navigate }: ServicesProps) {
               <button
                 key={service.id}
                 type="button"
-                onClick={() => navigate("order")}
+                onClick={() => navigate("order", { search: `service=${encodeURIComponent(service.id)}` })}
                 className="group flex min-h-[310px] flex-col overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_26px_70px_rgba(0,0,0,0.28)] transition hover:-translate-y-1 hover:border-[#f1c75b]/60"
               >
                 {service.image_url && (

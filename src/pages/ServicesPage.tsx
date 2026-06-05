@@ -1,12 +1,12 @@
 import { ArrowRight, Cake, CheckCircle2, FileImage, Pencil, Printer, Sparkles, type LucideIcon } from "lucide-react";
-import { type Page } from "../hooks/useRouter";
+import { type NavigateTo } from "../hooks/useRouter";
 import { type Service } from "../types/database";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { loadPublicSnapshot } from "../lib/studioApi";
 import { VISTAPRINT_LOGO_URL, displayServicePrice, isVistaprintService } from "../lib/serviceCatalog";
 
 interface ServicesPageProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -26,9 +26,9 @@ const categoryStyles: Record<string, string> = {
 };
 
 const perks = [
-  "Final design upload and order details in one flow",
-  "Advance payment through DK STUDIOS Razorpay",
-  "Digital services plus Vistaprint-powered print delivery",
+  "Upload your files and notes in the same place",
+  "Pay the advance through DK STUDIOS Razorpay",
+  "Digital work, local pickup, and supported print delivery",
   "Order-id tracking after order creation",
 ];
 
@@ -45,16 +45,16 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#f1c75b]">Services</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
-              Premium creative services, finished with a sharper eye.
+              The stuff we can make for you.
             </h1>
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-slate-300">
-              Choose retouching, digital sketches, custom sketch work, photo frames, or Vistaprint-powered products with clear options and secure advance payment.
+              Pick retouching, a digital sketch, a custom sketch, poster making, photo frames, or Vistaprint-powered print products. We'll keep the options clear before you pay the advance.
             </p>
             <button
               type="button"
-              onClick={() => navigate("order")}
+              onClick={() => navigate("services")}
               className="mt-6 inline-flex items-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-[#090b10] transition hover:bg-white"
             >
               Place order
@@ -82,7 +82,7 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
               <button
                 key={service.id}
                 type="button"
-                onClick={() => navigate("order")}
+                onClick={() => navigate("order", { search: `service=${encodeURIComponent(service.id)}` })}
                 className="group flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_24px_80px_rgba(0,0,0,0.34)] transition duration-300 hover:-translate-y-1.5 hover:border-[#f1c75b]/60 hover:bg-[#131f2a] hover:shadow-[0_28px_90px_rgba(241,199,91,0.12)]"
               >
                 {service.image_url && (

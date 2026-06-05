@@ -4,10 +4,10 @@ import Portfolio from '../components/home/Portfolio';
 import Testimonials from '../components/home/Testimonials';
 import Delivery from '../components/home/Delivery';
 import Contact from '../components/home/Contact';
-import { Page } from '../hooks/useRouter';
+import { type NavigateTo } from '../hooks/useRouter';
 
 interface HomeProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 export default function Home({ navigate }: HomeProps) {

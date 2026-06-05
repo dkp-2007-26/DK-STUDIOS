@@ -13,6 +13,12 @@ export type Page =
   | 'delivery-secure-login'
   | 'delivery-scan';
 
+export type NavigateOptions = {
+  search?: string | URLSearchParams;
+};
+
+export type NavigateTo = (page: Page, options?: NavigateOptions) => void;
+
 export const VALID_PAGES: Page[] = [
   'home',
   'spotlight',
@@ -41,7 +47,7 @@ export const FOOTER_QUICK_LINKS: Array<{ label: string; page: Page }> = [
   { label: 'Services', page: 'services' },
   { label: 'Spotlight', page: 'spotlight' },
   { label: 'Templates', page: 'templates' },
-  { label: 'Place Order', page: 'order' },
+  { label: 'Choose Product', page: 'services' },
 ];
 
 export function routeToPage(value: string): Page {
@@ -59,8 +65,12 @@ export function currentRouteToPage(): Page {
   return routeToPage(window.location.hash || window.location.pathname);
 }
 
-export function pageToPath(page: Page) {
-  return page === 'home' ? '/' : `/${page}`;
+export function pageToPath(page: Page, options: NavigateOptions = {}) {
+  const base = page === 'home' ? '/' : `/${page}`;
+  if (!options.search) return base;
+  const rawSearch = typeof options.search === 'string' ? options.search : options.search.toString();
+  if (!rawSearch) return base;
+  return `${base}${rawSearch.startsWith('?') ? rawSearch : `?${rawSearch}`}`;
 }
 
 export function hashToPage(hash: string): Page {

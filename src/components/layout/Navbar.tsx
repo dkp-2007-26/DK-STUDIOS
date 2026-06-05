@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { LayoutDashboard, LogOut, Menu, ShoppingBag, User, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { PRIMARY_NAV_LINKS, type Page } from "../../app/router";
+import { PRIMARY_NAV_LINKS, type NavigateTo, type Page } from "../../app/router";
 import { BRAND_LOGO_SRC, BRAND_NAME } from "../../lib/brand";
 
 interface NavbarProps {
   currentPage: Page;
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
   onOpenAuth: (mode: "login" | "forgot") => void;
 }
 
@@ -80,11 +80,11 @@ export default function Navbar({ currentPage, navigate, onOpenAuth }: NavbarProp
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleNav("order")}
+                      onClick={() => handleNav("services")}
                       className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold transition hover:bg-slate-100"
                     >
                       <ShoppingBag size={16} />
-                      Place Order
+                      Choose Product
                     </button>
                     <button
                       type="button"
@@ -111,7 +111,7 @@ export default function Navbar({ currentPage, navigate, onOpenAuth }: NavbarProp
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleNav("order")}
+                  onClick={() => handleNav("services")}
                   className="rounded-lg bg-[#f1c75b] px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-[#ffdc73]"
                 >
                   Start Order
@@ -148,10 +148,10 @@ export default function Navbar({ currentPage, navigate, onOpenAuth }: NavbarProp
             ))}
             <button
               type="button"
-              onClick={() => handleNav("order")}
+              onClick={() => handleNav("services")}
               className="rounded-lg bg-[#f1c75b] px-4 py-3 text-left text-sm font-black text-slate-950"
             >
-              Place Order
+              Choose Product
             </button>
             {user ? (
               <>
@@ -174,7 +174,7 @@ export default function Navbar({ currentPage, navigate, onOpenAuth }: NavbarProp
                 <button type="button" onClick={() => handleNav("dashboard")} className="rounded-lg border border-white/15 px-4 py-3 text-sm font-bold text-white">
                   Track Order
                 </button>
-                <button type="button" onClick={() => handleNav("order")} className="rounded-lg bg-white px-4 py-3 text-sm font-black text-slate-950">
+                <button type="button" onClick={() => handleNav("services")} className="rounded-lg bg-white px-4 py-3 text-sm font-black text-slate-950">
                   Start Order
                 </button>
               </div>

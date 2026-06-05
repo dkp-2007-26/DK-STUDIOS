@@ -1,9 +1,9 @@
 import { ArrowRight, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
-import { FOOTER_QUICK_LINKS, type Page } from "../../app/router";
+import { FOOTER_QUICK_LINKS, type NavigateTo } from "../../app/router";
 import { BRAND_LOGO_SRC, BRAND_NAME, PARENT_BRAND_LABEL, SUPPORT_EMAIL, SUPPORT_WHATSAPP_URL } from "../../lib/brand";
 
 interface FooterProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 const services = [
@@ -28,10 +28,10 @@ export default function Footer({ navigate }: FooterProps) {
             </p>
             <button
               type="button"
-              onClick={() => navigate("order")}
+              onClick={() => navigate("services")}
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#f1c75b] px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-[#ffdc73]"
             >
-              Place order
+              Choose product
               <ArrowRight size={16} />
             </button>
           </div>

@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle, CreditCard, FileText, Home, MessageCircle, PackageCheck, Store, Tag } from "lucide-react";
 import PhotoUploadStudio, { type EditablePhotoAsset } from "../components/order/PhotoUploadStudio";
 import { useAuth } from "../context/AuthContext";
-import type { Page } from "../hooks/useRouter";
-import { BRAND_NAME, BRAND_STORAGE_SLUG, PAYMENT_PROVIDER_NAME, SUPPORT_WHATSAPP_URL } from "../lib/brand";
+import type { NavigateTo } from "../hooks/useRouter";
+import { BRAND_NAME, BRAND_STORAGE_SLUG, SUPPORT_WHATSAPP_URL } from "../lib/brand";
 import { downloadInvoicePdf } from "../lib/invoice";
 import { uploadFileToGoogleDrive } from "../lib/googleDrive";
 import { openRazorpayCheckout } from "../lib/razorpay";
-import { VISTAPRINT_LOGO_URL, displayServicePrice, isVistaprintService } from "../lib/serviceCatalog";
+import { displayServicePrice, isVistaprintService } from "../lib/serviceCatalog";
 import { addGlitchTipBreadcrumb, captureGlitchTipError } from "../lib/glitchtip";
 import type { Order, Service, Template } from "../types/database";
 import { useAsyncData } from "../hooks/useAsyncData";
@@ -21,7 +21,7 @@ import {
 } from "../lib/studioApi";
 
 interface OrderExperiencePageProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
   onOpenAuth: (mode: "login" | "forgot") => void;
 }
 
@@ -38,7 +38,17 @@ type RazorpayCheckoutSession = {
 };
 
 const MANDATORY_ADVANCE_AMOUNT = 49;
-const RAZORPAY_DISMISSAL_MESSAGE = "Payment popup closed before completion.";
+const RAZORPAY_DISMISSAL_MESSAGE = "Payment was closed before the order was completed.";
+
+function readOrderSelectionParams() {
+  if (typeof window === "undefined") return { serviceId: "", templateId: "" };
+  const hashQuery = window.location.hash.includes("?") ? window.location.hash.split("?")[1] : "";
+  const params = new URLSearchParams(window.location.search || hashQuery);
+  return {
+    serviceId: params.get("service") || params.get("serviceId") || "",
+    templateId: params.get("template") || params.get("templateId") || "",
+  };
+}
 
 function isCustomerDismissalError(error: unknown) {
   return error instanceof Error && error.message === RAZORPAY_DISMISSAL_MESSAGE;
@@ -75,12 +85,13 @@ function supplierLabel(order: Order) {
 
 export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExperiencePageProps) {
   const { user, sessionToken } = useAuth();
-  const { data: publicData } = useAsyncData(loadPublicSnapshot, []);
+  const { data: publicData, loading: publicLoading } = useAsyncData(loadPublicSnapshot, []);
   const services = (publicData?.services ?? []) as Service[];
   const templates = (publicData?.templates ?? []) as Template[];
+  const initialSelection = readOrderSelectionParams();
 
-  const [serviceId, setServiceId] = useState("");
-  const [templateId, setTemplateId] = useState("");
+  const [serviceId] = useState(initialSelection.serviceId);
+  const [templateId, setTemplateId] = useState(initialSelection.templateId);
   const [deliveryType, setDeliveryType] = useState<"digital" | "printed">("digital");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"pickup" | "home_delivery">("pickup");
   const [frameFulfillmentTier, setFrameFulfillmentTier] = useState<"local_standard" | "vistaprint_premium">("local_standard");
@@ -133,6 +144,12 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   const total = promoPreview?.total_amount ?? subtotal;
   const advance = MANDATORY_ADVANCE_AMOUNT;
   const balance = Math.max(total - advance, 0);
+
+  useEffect(() => {
+    if (!publicLoading && (!serviceId || !selectedService)) {
+      navigate("services");
+    }
+  }, [navigate, publicLoading, selectedService, serviceId]);
 
   useEffect(() => {
     if (!selectedService?.product_options.length) {
@@ -280,7 +297,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         },
         fingerprint: ["checkout", "order_submit"],
       });
-      setError((submitError as Error).message || "Unable to place order.");
+      setError((submitError as Error).message || "We couldn't book this order yet. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -307,7 +324,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
       }
 
       if (!checkout.key_id) {
-        throw new Error("Razorpay key id is not configured.");
+        throw new Error("Secure payment is not ready yet. Please message us and we'll help.");
       }
 
       const paymentResponse = await openRazorpayCheckout({
@@ -316,7 +333,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         currency: checkout.currency,
         providerOrderId: checkout.provider_order_id,
         brandName: BRAND_NAME,
-        description: `Advance payment for ${checkout.receipt}`,
+        description: `Booking for ${checkout.receipt}`,
         customerName: checkout.customer_name,
         customerEmail: checkout.customer_email,
         customerPhone: checkout.customer_phone,
@@ -332,7 +349,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
       })) as { ok: boolean };
 
       if (!verified.ok) {
-        throw new Error("Razorpay payment could not be verified.");
+        throw new Error("We could not confirm the payment yet. Please try again or message us.");
       }
 
       setPaymentSuccess(true);
@@ -363,7 +380,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           fingerprint: ["checkout", "advance_payment", "razorpay"],
         });
       }
-      setPaymentError((paymentSubmitError as Error).message || "Unable to start Razorpay payment.");
+      setPaymentError((paymentSubmitError as Error).message || "We couldn't open secure payment right now. Please try again.");
     } finally {
       setPaymentProcessing(false);
     }
@@ -389,7 +406,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         },
         fingerprint: ["checkout", "bill_download"],
       });
-      setPaymentError("Could not generate the bill. Please try again.");
+      setPaymentError("We couldn't create the bill just now. Please try again.");
     }
   };
 
@@ -402,31 +419,31 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-lg bg-emerald-300/10 text-emerald-300">
             <CheckCircle size={36} />
           </div>
-          <h1 className="text-3xl font-black text-white">{paymentIsPaid ? "Request submitted" : "Pay advance to submit"}</h1>
+          <h1 className="text-3xl font-black text-white">{paymentIsPaid ? "Your order is booked" : "Complete your order"}</h1>
           <p className="mt-3 text-sm leading-7 text-slate-300">
             {paymentIsPaid
-              ? `Your Rs. ${MANDATORY_ADVANCE_AMOUNT} advance is verified. The remaining balance is paid after the work by cash or shop QR.`
-              : `Files were uploaded to Google Drive. Pay the mandatory Rs. ${MANDATORY_ADVANCE_AMOUNT} online advance to submit the request to ${BRAND_NAME}.`}
+              ? `Your Rs. ${MANDATORY_ADVANCE_AMOUNT} booking amount is confirmed. You can pay the remaining balance after we finish the work, by cash or shop QR.`
+              : `Your files are ready with us. Pay the Rs. ${MANDATORY_ADVANCE_AMOUNT} booking amount so we can start your design.`}
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-6">
             <Info label="Order ID" value={createdOrder.id} dark />
             <Info label="Bill" value={createdOrder.bill_number ?? "Pending"} dark />
-            <Info label="Advance" value={`Rs. ${createdOrder.advance_amount}`} dark />
+            <Info label="Booking" value={`Rs. ${createdOrder.advance_amount}`} dark />
             <Info label="Balance" value={`Rs. ${Math.max(createdOrder.total_amount - createdOrder.advance_amount, 0)}`} dark />
-            <Info label="Payment" value={paymentIsPaid ? "Paid" : "Pending"} dark />
+            <Info label="Booking" value={paymentIsPaid ? "Confirmed" : "Waiting"} dark />
             <Info label="Supplier" value={supplierLabel(createdOrder)} dark />
           </div>
           <BillPreview order={createdOrder} paid={paymentIsPaid} />
           <div className={`mt-6 rounded-lg border p-4 text-left ${paymentIsPaid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
             <p className={`text-sm font-black ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
-              {paymentIsPaid ? "Payment verified" : `${PAYMENT_PROVIDER_NAME} checkout is ready`}
+              {paymentIsPaid ? "Booking confirmed" : `Complete your order securely`}
             </p>
             <p className={`mt-2 text-sm leading-6 ${paymentIsPaid ? "text-emerald-700" : "text-amber-800"}`}>
             {paymentIsPaid
               ? createdOrder.fulfillment_method === "home_delivery"
-                ? `Your request is now visible to the studio. ${supplierLabel(createdOrder)} fulfillment is queued after the work is complete.`
-                : `Your request is now visible to the studio. Supplier route: ${supplierLabel(createdOrder)}.`
-              : "Pay the Rs. 49 advance using DK STUDIOS' Razorpay account. The studio receives the request only after server signature verification."}
+                ? `Great news. Your design is now in our work queue. ${supplierLabel(createdOrder)} fulfillment starts after the artwork is complete.`
+                : `Great news. Your design is now in our work queue. Supplier route: ${supplierLabel(createdOrder)}.`
+              : "Pay the Rs. 49 booking amount securely through Razorpay. We start the order after payment confirmation."}
             </p>
             {paymentError && (
               <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -446,15 +463,47 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             >
               <span className="inline-flex items-center gap-2">
                 <CreditCard size={16} />
-                {paymentIsPaid ? "Paid" : paymentProcessing ? "Opening Razorpay..." : `Pay Rs. ${createdOrder.advance_amount} and submit`}
+                {paymentIsPaid ? "Booked" : paymentProcessing ? "Opening secure payment..." : `Complete order for Rs. ${createdOrder.advance_amount}`}
               </span>
             </button>
           </div>
           <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center justify-center gap-2 text-sm font-bold text-emerald-700 underline">
-            <MessageCircle size={15} /> Need help with this payment?
+            <MessageCircle size={15} /> Need help finishing the order?
           </a>
           <button type="button" onClick={() => navigate("dashboard")} className="mt-5 block w-full text-sm font-bold text-slate-300 underline">
             Track this order
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (publicLoading && !selectedService) {
+    return (
+      <div className="min-h-screen bg-[#070a0f] px-4 pb-16 pt-28 text-white">
+        <div className="mx-auto max-w-3xl rounded-lg border border-white/10 bg-[#101820] p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#f1c75b]/30 border-t-[#f1c75b]" />
+          <p className="mt-5 text-sm font-bold text-slate-300">Loading selected product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!serviceId || !selectedService) {
+    return (
+      <div className="min-h-screen bg-[#070a0f] px-4 pb-16 pt-28 text-white">
+        <div className="mx-auto max-w-3xl rounded-lg border border-white/10 bg-[#101820] p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.34)]">
+          <PackageCheck size={36} className="mx-auto text-[#f1c75b]" />
+          <h1 className="mt-5 text-3xl font-black text-white">Choose a product first</h1>
+          <p className="mt-3 text-sm leading-7 text-slate-300">
+            The checkout opens only after you select a service or product.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("services")}
+            className="mt-6 rounded-lg bg-[#f1c75b] px-6 py-3 text-sm font-black text-stone-950 transition hover:bg-[#ffdc73]"
+          >
+            Go to products
           </button>
         </div>
       </div>
@@ -466,54 +515,20 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 grid gap-5 lg:grid-cols-[1fr,0.65fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase text-[#f1c75b]">{BRAND_NAME} checkout</p>
+            <p className="text-sm font-bold uppercase text-[#f1c75b]">{BRAND_NAME} order</p>
             <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">Place your order</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">Preview, crop, and reorder photos before they are uploaded to Google Drive.</p>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">Show us what you have in mind. Add your files, notes, and options here, then preview, crop, and arrange your photos before ordering.</p>
           </div>
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-            Files are stored in Google Drive. Rs. {MANDATORY_ADVANCE_AMOUNT} online advance is mandatory; the balance is paid after the work by cash or shop QR.
+            Your files are safely stored for this order. Rs. {MANDATORY_ADVANCE_AMOUNT} booking amount is required; the balance is paid after we finish the work by cash or shop QR.
           </div>
         </div>
 
-        <div className={`grid gap-6 ${selectedService ? "lg:grid-cols-[1.35fr,0.65fr]" : ""}`}>
+        <div className="grid gap-6 lg:grid-cols-[1.35fr,0.65fr]">
         <div className="rounded-lg border border-white/10 bg-[#101820] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:p-8">
-          <h2 className="text-2xl font-black text-white">Choose your service</h2>
+          <h2 className="text-2xl font-black text-white">Confirm your product</h2>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {services.map((service) => {
-              const isVistaprint = isVistaprintService(service);
-              return (
-                <button
-                  key={service.id}
-                  type="button"
-                  onClick={() => setServiceId(service.id)}
-                  className={`overflow-hidden rounded-lg border text-left transition ${serviceId === service.id ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
-                >
-                  {service.image_url && (
-                    <span className="block aspect-[16/10] overflow-hidden bg-[#0b1118] p-3">
-                      <img src={service.image_url} alt="" className="h-full w-full object-contain" loading="lazy" />
-                    </span>
-                  )}
-                  <span className="block p-4">
-                    <span className="block font-black text-white">{service.name}</span>
-                    <span className="mt-1 block text-sm leading-6 text-slate-300">{service.description}</span>
-                    <span className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-sm font-black text-[#f1c75b]">{displayServicePrice(service)}</span>
-                      {isVistaprint && (
-                        <span className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2 py-1">
-                          <span className="text-[10px] font-black uppercase tracking-wide text-stone-500">Powered by</span>
-                          <img src={VISTAPRINT_LOGO_URL} alt="VistaPrint" className="h-3.5 w-auto" loading="lazy" />
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedService && (
-            <div className="mt-6 overflow-hidden rounded-lg border border-[#f1c75b]/25 bg-[#0b1118] shadow-[0_22px_70px_rgba(0,0,0,0.28)]">
+          <div className="mt-6 overflow-hidden rounded-lg border border-[#f1c75b]/25 bg-[#0b1118] shadow-[0_22px_70px_rgba(0,0,0,0.28)]">
               <div className="grid gap-0 md:grid-cols-[0.42fr,0.58fr]">
                 {selectedService.image_url && (
                   <div className="bg-black/25 p-4">
@@ -533,12 +548,18 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
                     ))}
                   </div>
                   <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Continue below to add customer details, files, options, and checkout.
+                    Continue below to add your details, references, options, and booking.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate("services")}
+                    className="mt-5 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-black text-white transition hover:border-[#f1c75b]"
+                  >
+                    Change product
+                  </button>
                 </div>
               </div>
             </div>
-          )}
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Full name" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
@@ -560,7 +581,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
 
           {selectedService?.product_options.length ? (
             <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs font-bold uppercase text-slate-400">Product options</p>
+              <p className="text-xs font-bold uppercase text-slate-400">Artwork options</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {selectedService.product_options.map((option) => (
                   <label key={option.key} className="block">
@@ -592,7 +613,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
                     className={`rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${selectedFrameFulfillmentTier === "local_standard" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
                   >
                     <span className="inline-flex items-center gap-2 text-sm font-black text-white"><Store size={17} /> Standard photo frame</span>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">Routed to local supplier for standard photo frame orders.</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">We route standard photo frame orders to the local supplier.</p>
                   </button>
                   <button
                     type="button"
@@ -601,24 +622,23 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
                     className={`rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${selectedFrameFulfillmentTier === "vistaprint_premium" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
                   >
                     <span className="inline-flex items-center gap-2 text-sm font-black text-white"><PackageCheck size={17} /> Premium photo frame</span>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">Routed to Vistaprint for premium photo frame orders.</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">We route this frame option to Vistaprint.</p>
                   </button>
                 </div>
               ) : (
                 <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
                   <span className="inline-flex items-center gap-2 font-black text-white"><PackageCheck size={17} /> Vistaprint only</span>
-                  <p className="mt-2">This product will be routed to Vistaprint. No backup supplier is used.</p>
+                  <p className="mt-2">This product goes to Vistaprint. No backup supplier is used.</p>
                 </div>
               )}
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  disabled={selectedServiceIsVistaprint}
                   onClick={() => setFulfillmentMethod("pickup")}
-                  className={`rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-55 ${fulfillmentMethod === "pickup" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
+                  className={`rounded-lg border p-4 text-left transition ${fulfillmentMethod === "pickup" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
                 >
                   <span className="inline-flex items-center gap-2 text-sm font-black text-white"><Store size={17} /> In-store pickup</span>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">{selectedServiceIsVistaprint ? "Vistaprint catalog products use supplier-handled home delivery." : "Collect from DK STUDIOS and pay the balance at pickup."}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">Collect from DK STUDIOS and pay the balance at pickup.</p>
                 </button>
                 <button
                   type="button"
@@ -626,20 +646,31 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
                   className={`rounded-lg border p-4 text-left transition ${fulfillmentMethod === "home_delivery" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
                 >
                   <span className="inline-flex items-center gap-2 text-sm font-black text-white"><Home size={17} /> Home delivery</span>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">Queue this printed order for supplier-handled delivery after payment.</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">Send this printed order for supplier-handled delivery after the booking is confirmed.</p>
                 </button>
               </div>
+              {selectedServiceIsVistaprint && (
+                <p className="mt-3 rounded-lg border border-[#f1c75b]/20 bg-[#f1c75b]/10 px-4 py-3 text-sm font-semibold leading-6 text-[#f7d880]">
+                  Vistaprint product price stays the same for home delivery and in-store pickup.
+                </p>
+              )}
 
               {fulfillmentRequiresAddress && (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <input value={shipping.name} onChange={(event) => setShipping((current) => ({ ...current, name: event.target.value }))} placeholder="Recipient name" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
-                  <input value={shipping.phone} onChange={(event) => setShipping((current) => ({ ...current, phone: event.target.value }))} placeholder="Delivery phone" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
-                  <input value={shipping.addressLine1} onChange={(event) => setShipping((current) => ({ ...current, addressLine1: event.target.value }))} placeholder="Address line 1" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b] sm:col-span-2" />
-                  <input value={shipping.addressLine2} onChange={(event) => setShipping((current) => ({ ...current, addressLine2: event.target.value }))} placeholder="Address line 2 (optional)" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b] sm:col-span-2" />
-                  <input value={shipping.city} onChange={(event) => setShipping((current) => ({ ...current, city: event.target.value }))} placeholder="City" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
-                  <input value={shipping.state} onChange={(event) => setShipping((current) => ({ ...current, state: event.target.value }))} placeholder="State" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
-                  <input value={shipping.pincode} onChange={(event) => setShipping((current) => ({ ...current, pincode: event.target.value }))} placeholder="Pincode" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
-                  <input value={shipping.country} onChange={(event) => setShipping((current) => ({ ...current, country: event.target.value }))} placeholder="Country" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                <div className="mt-4 rounded-lg border border-white/10 bg-[#0b1118] p-4">
+                  <p className="text-xs font-bold uppercase text-[#f7d880]">Delivery address</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Fill these details for home delivery. Name and phone can be different from the customer details above.
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <input value={shipping.name} onChange={(event) => setShipping((current) => ({ ...current, name: event.target.value }))} placeholder="Recipient name" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                    <input value={shipping.phone} onChange={(event) => setShipping((current) => ({ ...current, phone: event.target.value }))} placeholder="Delivery phone" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                    <input value={shipping.addressLine1} onChange={(event) => setShipping((current) => ({ ...current, addressLine1: event.target.value }))} placeholder="House / building / street" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b] sm:col-span-2" />
+                    <input value={shipping.addressLine2} onChange={(event) => setShipping((current) => ({ ...current, addressLine2: event.target.value }))} placeholder="Area / landmark (optional)" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b] sm:col-span-2" />
+                    <input value={shipping.city} onChange={(event) => setShipping((current) => ({ ...current, city: event.target.value }))} placeholder="City" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                    <input value={shipping.state} onChange={(event) => setShipping((current) => ({ ...current, state: event.target.value }))} placeholder="State" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                    <input value={shipping.pincode} onChange={(event) => setShipping((current) => ({ ...current, pincode: event.target.value }))} placeholder="Pincode" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                    <input value={shipping.country} onChange={(event) => setShipping((current) => ({ ...current, country: event.target.value }))} placeholder="Country" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
+                  </div>
                 </div>
               )}
             </div>
@@ -668,23 +699,23 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           )}
 
           <button type="button" disabled={submitting || !selectedService || !form.name || !form.email} onClick={() => void handleSubmit()} className="mt-6 w-full rounded-lg bg-[#f1c75b] py-4 text-sm font-black text-stone-950 transition hover:bg-[#ffdc73] disabled:opacity-60">
-            {submitting ? "Uploading to Google Drive..." : `Place Order for ${BRAND_NAME}`}
+            {submitting ? "Saving your files..." : "Book your design"}
           </button>
         </div>
 
         {selectedService && (
         <aside className="h-fit rounded-lg border border-white/10 bg-[#101820] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.22)] lg:sticky lg:top-24">
-          <p className="text-xs font-bold uppercase text-[#f7d880]">Order Summary</p>
+          <p className="text-xs font-bold uppercase text-[#f7d880]">Order summary</p>
           <h2 className="mt-2 text-2xl font-black text-white">{selectedService?.name ?? "Choose a service"}</h2>
           <div className="mt-6 space-y-3">
             <Info label="Subtotal" value={`Rs. ${subtotal}`} dark />
             <Info label="Discount" value={`Rs. ${promoPreview?.discount_amount ?? 0}`} dark />
             <Info label="Total" value={`Rs. ${total}`} highlight dark />
-            <Info label="Advance" value={`Rs. ${advance}`} dark />
+            <Info label="Booking" value={`Rs. ${advance}`} dark />
             <Info label="Balance after work" value={`Rs. ${balance}`} dark />
             <Info label="Fulfillment" value={effectiveDeliveryType === "printed" ? (fulfillmentMethod === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
             <Info label="Supplier" value={routedSupplier} dark />
-            <Info label="Prepared files" value={`${assets.length}`} dark />
+            <Info label="References" value={`${assets.length}`} dark />
           </div>
           {selectedService?.product_options.length ? (
             <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
@@ -698,13 +729,13 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
           ) : null}
           {optionFrameTier === "vistaprint_premium" && (
             <div className="mt-5 rounded-lg border border-[#f1c75b]/30 bg-[#f1c75b]/10 p-4 text-sm leading-6 text-[#f7d880]">
-              Premium Vistaprint frame pricing is subject to the final customisation quote. Rs. 49 is the design/order advance shown now.
+              Vistaprint frame pricing depends on the final size and option. Rs. 49 is the booking amount shown now.
             </div>
           )}
           {effectiveDeliveryType === "printed" && (
             <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
               <span className="inline-flex items-center gap-2 font-black text-[#f7d880]"><PackageCheck size={16} /> Supplier route</span>
-              <p className="mt-2">{selectedServiceIsPhotoFrame ? "Photo frames use Local for Standard and Vistaprint for Premium." : "This product is routed to Vistaprint only."}</p>
+              <p className="mt-2">{selectedServiceIsPhotoFrame ? "Standard frames use the local supplier. Vistaprint frame options go to Vistaprint." : "This product goes to Vistaprint only."}</p>
             </div>
           )}
         </aside>
@@ -725,22 +756,22 @@ function BillPreview({ order, paid }: { order: Order; paid: boolean }) {
           <h2 className="mt-2 text-xl font-black text-white">{order.bill_number ?? "Bill pending"}</h2>
         </div>
         <span className={`rounded-lg px-3 py-2 text-xs font-black uppercase ${paid ? "bg-emerald-300/15 text-emerald-200" : "bg-amber-300/15 text-amber-200"}`}>
-          {paid ? "Advance paid" : "Advance pending"}
+          {paid ? "Booking confirmed" : "Booking pending"}
         </span>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Info label="Subtotal" value={`Rs. ${order.subtotal_amount}`} dark />
         <Info label="Total" value={`Rs. ${order.total_amount}`} highlight dark />
-        <Info label="Advance" value={`Rs. ${order.advance_amount}`} dark />
+        <Info label="Booking" value={`Rs. ${order.advance_amount}`} dark />
         <Info label="Balance" value={`Rs. ${balance}`} dark />
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Info label="Fulfillment" value={order.delivery_type === "printed" ? (order.fulfillment_method === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
         <Info label="Supplier" value={supplierLabel(order)} dark />
-        <Info label="Files" value={`${order.photo_count} uploaded to Google Drive`} dark />
+        <Info label="Files" value={`${order.photo_count} ready for the design`} dark />
       </div>
       <p className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-6 text-slate-300">
-        Google Drive files stay available for studio work, then are scheduled for automatic deletion 1 hour after delivery or in-store pickup completion.
+        Your reference files stay available while we work on the order, then they are scheduled for automatic deletion 1 hour after delivery or in-store pickup completion.
       </p>
     </div>
   );

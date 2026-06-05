@@ -1,16 +1,16 @@
 import { ArrowRight, CreditCard, ImagePlus, PackageCheck, ShieldCheck } from "lucide-react";
-import { type Page } from "../../hooks/useRouter";
+import { type NavigateTo } from "../../hooks/useRouter";
 import { BRAND_LOGO_SRC, BRAND_NAME, PARENT_BRAND_LABEL, PAYMENT_PROVIDER_NAME } from "../../lib/brand";
 import { heroShowcaseImage } from "../../lib/showcase";
 
 interface HeroProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 const proofPoints = [
-  { icon: ImagePlus, label: "Upload design", value: "Final files accepted" },
-  { icon: CreditCard, label: "Advance payment", value: PAYMENT_PROVIDER_NAME },
-  { icon: PackageCheck, label: "Print delivery", value: "Vistaprint powered" },
+  { icon: ImagePlus, label: "Send your files", value: "Photos, ideas, or final artwork" },
+  { icon: CreditCard, label: "Book securely", value: PAYMENT_PROVIDER_NAME },
+  { icon: PackageCheck, label: "Print options", value: "Pickup or supported delivery" },
 ];
 
 export default function Hero({ navigate }: HeroProps) {
@@ -30,7 +30,7 @@ export default function Hero({ navigate }: HeroProps) {
         <div className="max-w-3xl py-10 sm:py-14 lg:py-20">
           <div className="mb-7 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase text-[#f7d880] backdrop-blur">
             <ShieldCheck size={15} />
-            Studio orders powered by {PARENT_BRAND_LABEL}
+            Made with care, powered by {PARENT_BRAND_LABEL}
           </div>
 
           <img src={BRAND_LOGO_SRC} alt={BRAND_NAME} className="mb-6 h-24 w-auto max-w-full object-contain sm:h-28" />
@@ -42,13 +42,13 @@ export default function Hero({ navigate }: HeroProps) {
             {BRAND_NAME}
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
-            Retouching, digital sketches, poster design, and Vistaprint-powered printed products in one clean order flow with secure uploads and DK STUDIOS checkout support.
+            We make custom sketches, digital art, posters, and photo retouching that still feels like you. Send us the photo, the idea, or even a messy note. We'll shape it into something you can download, frame, gift, or print.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={() => navigate("order")}
+              onClick={() => navigate("services")}
               className="inline-flex items-center justify-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-bold text-[#17120a] shadow-[0_16px_40px_rgba(0,0,0,0.28)] transition hover:bg-[#ffdc73] active:scale-[0.98]"
             >
               Start an Order

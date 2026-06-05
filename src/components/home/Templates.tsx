@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, Cake, FileImage, Heart, type LucideIcon } from "lucide-react";
-import { type Page } from "../../hooks/useRouter";
+import { type NavigateTo } from "../../hooks/useRouter";
 import { type Template } from "../../types/database";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { loadPublicSnapshot } from "../../lib/studioApi";
 
 interface TemplatesProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -23,6 +23,17 @@ const tagStyles: Record<string, string> = {
 };
 
 const EMPTY_TEMPLATES: Template[] = [];
+
+const templateServiceByCategory: Record<string, string> = {
+  Birthday: "vistaprint-birthday-invitations",
+  Wedding: "vistaprint-wedding-invitations",
+  Poster: "poster-making",
+};
+
+function orderSearchForTemplate(template: Template) {
+  const service = templateServiceByCategory[template.category] ?? "poster-making";
+  return `service=${encodeURIComponent(service)}&template=${encodeURIComponent(template.id)}`;
+}
 
 export default function Templates({ navigate }: TemplatesProps) {
   const [active, setActive] = useState("All");
@@ -43,12 +54,12 @@ export default function Templates({ navigate }: TemplatesProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#f1c75b]">Template studio</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              Pick a layout, then make it personal.
+              Start with a layout, then we'll make it yours.
             </h2>
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-slate-300">
-              Templates are starting points for faster delivery. You can still add custom names, dates, wishes, and print instructions during checkout.
+              Templates are useful when you want something faster. Add names, dates, wishes, photos, and print notes during checkout, and we'll adjust the design around them.
             </p>
             <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
               {categories.map((category) => (
@@ -76,7 +87,7 @@ export default function Templates({ navigate }: TemplatesProps) {
               <button
                 key={template.id}
                 type="button"
-                onClick={() => navigate("order")}
+                onClick={() => navigate("order", { search: orderSearchForTemplate(template) })}
                 className="group overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition hover:-translate-y-1 hover:border-[#f1c75b]/45"
               >
                 <span className="relative block aspect-[4/3] overflow-hidden bg-[#0b1118] p-3">
@@ -94,7 +105,7 @@ export default function Templates({ navigate }: TemplatesProps) {
                   </span>
                   <span className="mt-3 block text-lg font-black text-white">{template.name}</span>
                   <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-300">
-                    {template.description || "Use this design as a base for your order."}
+                    {template.description || "Use this layout as a starting point for your order."}
                   </span>
                   <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#f1c75b]">
                     Use template

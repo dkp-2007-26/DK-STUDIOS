@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Send, Sparkles } from "lucide-react";
-import { type Page } from "../hooks/useRouter";
+import { type NavigateTo } from "../hooks/useRouter";
 
 interface PortfolioPageProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 export default function PortfolioPage({ navigate }: PortfolioPageProps) {
@@ -17,16 +17,16 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#89d4d2]">Spotlight</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
-              A premium showcase is yet to come.
+              The real-work wall is coming.
             </h1>
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-slate-300">
-              We are preparing this page for customer-approved designs only, so every featured piece feels intentional.
+              We're saving this page for customer-approved designs only. Better a quiet page than a fake one.
             </p>
             <button
               type="button"
-              onClick={() => navigate("order")}
+              onClick={() => navigate("services")}
               className="mt-6 inline-flex items-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-slate-950 transition hover:bg-[#ffdc73]"
             >
               Create yours
@@ -44,10 +44,10 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
               </span>
               <p className="mt-7 text-sm font-black uppercase text-[#f1c75b]">Yet to come</p>
               <h2 className="mt-3 max-w-4xl text-5xl font-black leading-tight text-white sm:text-6xl">
-                The DK STUDIOS Spotlight opens after the first approved features.
+                The DK STUDIOS Spotlight opens after the first approved pieces.
               </h2>
               <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300">
-                No placeholder gallery here. This space will stay reserved for real customer-approved work, presented cleanly and with permission.
+                No placeholder gallery here. This space stays for real customer work, shown only with permission.
               </p>
             </div>
           </div>
@@ -60,7 +60,7 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
               Loved your final design?
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-300">
-              Share your details and get a chance to be featured on the DK STUDIOS website with your design.
+              Share your details and, if it fits the page, we'll ask before putting your design on the DK STUDIOS website.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export default function PortfolioPage({ navigate }: PortfolioPageProps) {
               <CheckCircle2 size={42} className="text-emerald-300" />
               <h3 className="mt-4 text-2xl font-black text-white">Submission received</h3>
               <p className="mt-3 max-w-md text-sm leading-6 text-emerald-100/80">
-                We will review the design and contact you before featuring anything publicly.
+                We'll review the design and contact you before anything goes public.
               </p>
               <button
                 type="button"

@@ -120,8 +120,8 @@ export default function DashboardPage({ navigate }: DashboardProps) {
           <div className="mt-6 rounded-lg border border-white/10 bg-[#101820] p-8 text-center shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
             <ShoppingBag size={32} className="mx-auto text-[#f1c75b]" />
             <p className="mt-4 text-sm text-slate-300">Place an order first, then use the generated order id here.</p>
-            <button type="button" onClick={() => navigate("order")} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-black text-white transition hover:border-[#f1c75b]">
-              Place Order <ArrowRight size={16} />
+            <button type="button" onClick={() => navigate("services")} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-black text-white transition hover:border-[#f1c75b]">
+              Choose Product <ArrowRight size={16} />
             </button>
           </div>
         )}
@@ -193,7 +193,7 @@ export default function DashboardPage({ navigate }: DashboardProps) {
                   <img src={order.barcode_url} alt={`Barcode for ${order.bill_number ?? order.id}`} className="h-auto w-full" />
                 </div>
               )}
-              <button type="button" onClick={() => navigate("order")} className="mt-5 w-full rounded-lg bg-[#f1c75b] px-5 py-3 text-sm font-black text-stone-950 transition hover:bg-[#ffdc73]">
+              <button type="button" onClick={() => navigate("services")} className="mt-5 w-full rounded-lg bg-[#f1c75b] px-5 py-3 text-sm font-black text-stone-950 transition hover:bg-[#ffdc73]">
                 Place another order
               </button>
             </aside>

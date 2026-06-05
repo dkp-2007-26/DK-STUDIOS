@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
-import type { Page } from '../../app/router';
+import type { NavigateTo, Page } from '../../app/router';
 import Navbar from '../layout/Navbar';
 import Footer from '../layout/Footer';
 import FloatingWhatsAppButton from './FloatingWhatsAppButton';
 
 interface PublicSiteLayoutProps {
   currentPage: Page;
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
   onOpenAuth: (mode: 'login' | 'forgot') => void;
   children: ReactNode;
 }

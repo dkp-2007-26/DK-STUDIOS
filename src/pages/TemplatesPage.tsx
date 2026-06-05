@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, Cake, FileImage, Heart, type LucideIcon } from "lucide-react";
-import { type Page } from "../hooks/useRouter";
+import { type NavigateTo } from "../hooks/useRouter";
 import { type Template } from "../types/database";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { loadPublicSnapshot } from "../lib/studioApi";
 import { VISTAPRINT_LOGO_URL } from "../lib/serviceCatalog";
 
 interface TemplatesPageProps {
-  navigate: (page: Page) => void;
+  navigate: NavigateTo;
 }
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -27,6 +27,17 @@ const tagStyles: Record<string, string> = {
 
 const EMPTY_TEMPLATES: Template[] = [];
 
+const templateServiceByCategory: Record<string, string> = {
+  Birthday: "vistaprint-birthday-invitations",
+  Wedding: "vistaprint-wedding-invitations",
+  Poster: "poster-making",
+};
+
+function orderSearchForTemplate(template: Template) {
+  const service = templateServiceByCategory[template.category] ?? "poster-making";
+  return `service=${encodeURIComponent(service)}&template=${encodeURIComponent(template.id)}`;
+}
+
 export default function TemplatesPage({ navigate }: TemplatesPageProps) {
   const [active, setActive] = useState("All");
   const { data } = useAsyncData(loadPublicSnapshot, []);
@@ -44,16 +55,16 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#f1c75b]">Templates</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
-              Ready-made design bases for faster custom orders.
+              Layouts we can quickly turn into your design.
             </h1>
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-slate-300">
-              Select a Vistaprint-sourced template, add names, dates, messages, and photos during checkout. For made-from-idea artwork, choose Custom Sketch in services.
+              Pick a template, then add names, dates, messages, and photos during checkout. If you want artwork from a raw idea instead, choose Custom Sketch in services.
             </p>
             <button
               type="button"
-              onClick={() => navigate("order")}
+              onClick={() => navigate("templates")}
               className="mt-6 inline-flex items-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-[#090b10] transition hover:bg-white"
             >
               Start order
@@ -86,7 +97,7 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
               <button
                 key={template.id}
                 type="button"
-                onClick={() => navigate("order")}
+                onClick={() => navigate("order", { search: orderSearchForTemplate(template) })}
                 className="group overflow-hidden rounded-lg border border-white/10 bg-[#101820] text-left shadow-[0_24px_80px_rgba(0,0,0,0.28)] transition hover:-translate-y-1 hover:border-[#f1c75b]/45"
               >
                 <span className="relative block aspect-[4/3] overflow-hidden bg-[#0b1118] p-3">
@@ -104,7 +115,7 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
                   </span>
                   <span className="mt-3 block text-lg font-black text-white">{template.name}</span>
                   <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-300">
-                    {template.description || "Use this design as a base for your order."}
+                    {template.description || "Use this layout as a starting point for your order."}
                   </span>
                   <span className="mt-4 inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5">
                     <span className="text-[10px] font-black uppercase tracking-wide text-stone-500">Powered by</span>

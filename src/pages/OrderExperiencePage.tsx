@@ -50,6 +50,22 @@ function isPhotoFrameService(service: Service | null) {
   return haystack.includes("photo frame") || haystack.includes("photoframe") || haystack.includes("frame");
 }
 
+function frameTierFromOutputPackage(value: string | null | undefined) {
+  const normalized = (value ?? "").toLowerCase();
+  if (normalized.includes("standard photo frame")) return "local_standard" as const;
+  if (normalized.includes("premium photo frame")) return "vistaprint_premium" as const;
+  return null;
+}
+
+function packageAwareSubtotal(service: Service | null, productOptions: Record<string, string>, deliveryType: "digital" | "printed") {
+  if (!service) return 0;
+  const frameTier = frameTierFromOutputPackage(productOptions.output_package);
+  if ((service.id === "digital-sketch" || service.id === "custom-sketch") && frameTier === "local_standard") {
+    return 199;
+  }
+  return service.base_price + (deliveryType === "printed" ? service.print_price : 0);
+}
+
 function supplierLabel(order: Order) {
   if (order.supplier === "local") return "Local standard";
   if (order.supplier === "vistaprint" && order.frame_fulfillment_tier === "vistaprint_premium") return "Vistaprint premium";
@@ -103,15 +119,17 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
   }, [user]);
 
   const selectedService = services.find((service) => service.id === serviceId) ?? null;
-  const selectedServiceIsPhotoFrame = isPhotoFrameService(selectedService);
+  const selectedServiceBaseIsPhotoFrame = isPhotoFrameService(selectedService);
   const selectedServiceIsVistaprint = isVistaprintService(selectedService);
-  const routedSupplier = deliveryType === "printed"
-    ? selectedServiceIsPhotoFrame && frameFulfillmentTier === "local_standard" ? "Local standard" : "Vistaprint"
+  const optionFrameTier = frameTierFromOutputPackage(productOptions.output_package);
+  const effectiveDeliveryType = optionFrameTier ? "printed" : deliveryType;
+  const selectedServiceIsPhotoFrame = selectedServiceBaseIsPhotoFrame || Boolean(optionFrameTier);
+  const selectedFrameFulfillmentTier = optionFrameTier ?? frameFulfillmentTier;
+  const routedSupplier = effectiveDeliveryType === "printed"
+    ? selectedServiceIsPhotoFrame && selectedFrameFulfillmentTier === "local_standard" ? "Local standard" : "Vistaprint"
     : "Digital";
-  const fulfillmentRequiresAddress = deliveryType === "printed" && fulfillmentMethod === "home_delivery";
-  const subtotal = selectedService
-    ? selectedService.base_price + (deliveryType === "printed" ? selectedService.print_price : 0)
-    : 0;
+  const fulfillmentRequiresAddress = effectiveDeliveryType === "printed" && fulfillmentMethod === "home_delivery";
+  const subtotal = packageAwareSubtotal(selectedService, productOptions, effectiveDeliveryType);
   const total = promoPreview?.total_amount ?? subtotal;
   const advance = MANDATORY_ADVANCE_AMOUNT;
   const balance = Math.max(total - advance, 0);
@@ -131,6 +149,15 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
     setDeliveryType("printed");
     setFulfillmentMethod("home_delivery");
   }, [selectedServiceIsVistaprint, serviceId]);
+
+  useEffect(() => {
+    if (!optionFrameTier) return;
+    setDeliveryType("printed");
+    setFrameFulfillmentTier(optionFrameTier);
+    if (optionFrameTier === "vistaprint_premium") {
+      setFulfillmentMethod("home_delivery");
+    }
+  }, [optionFrameTier]);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,9 +192,9 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
     try {
       addGlitchTipBreadcrumb("Customer started order submission", {
         serviceId: selectedService.id,
-        deliveryType,
+        deliveryType: effectiveDeliveryType,
         fulfillmentMethod,
-        frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
+        frameFulfillmentTier: selectedServiceIsPhotoFrame ? selectedFrameFulfillmentTier : null,
         supplier: routedSupplier,
         assetCount: assets.length,
         total,
@@ -201,17 +228,17 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         customerEmail: form.email,
         customerPhone: form.phone || null,
         instructions: form.instructions || null,
-        frameOption: "No Frame",
-        frameSize: "A4",
+        frameOption: productOptions.output_package || "No Frame",
+        frameSize: productOptions.frame_size || productOptions.size || "A4",
         collagePreference: "make_for_me",
         personalizationText: form.personalizationText || null,
         productOptions,
         photoCount: assets.length,
         photoNames: assets.map((asset) => asset.file.name),
         photoAssets: uploadedPhotos,
-        deliveryType,
-        fulfillmentMethod: deliveryType === "printed" ? fulfillmentMethod : "pickup",
-        frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
+        deliveryType: effectiveDeliveryType,
+        fulfillmentMethod: effectiveDeliveryType === "printed" ? fulfillmentMethod : "pickup",
+        frameFulfillmentTier: selectedServiceIsPhotoFrame ? selectedFrameFulfillmentTier : null,
         shippingAddress: fulfillmentRequiresAddress ? {
           name: shipping.name || form.name,
           phone: shipping.phone || form.phone,
@@ -241,9 +268,9 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
         extra: {
           serviceId: selectedService.id,
           hasTemplate: Boolean(templateId),
-          deliveryType,
+          deliveryType: effectiveDeliveryType,
           fulfillmentMethod,
-          frameFulfillmentTier: selectedServiceIsPhotoFrame ? frameFulfillmentTier : null,
+          frameFulfillmentTier: selectedServiceIsPhotoFrame ? selectedFrameFulfillmentTier : null,
           supplier: routedSupplier,
           productOptions,
           assetCount: assets.length,
@@ -488,7 +515,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Full name" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
             <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Phone number" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]" />
             <input value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} placeholder="Email address" className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b] sm:col-span-2" />
-            <select value={deliveryType} onChange={(event) => setDeliveryType(event.target.value as "digital" | "printed")} disabled={selectedServiceIsVistaprint} className="rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1c75b] disabled:opacity-70">
+            <select value={effectiveDeliveryType} onChange={(event) => setDeliveryType(event.target.value as "digital" | "printed")} disabled={selectedServiceIsVistaprint || Boolean(optionFrameTier)} className="rounded-lg border border-white/10 bg-[#141c26] px-4 py-3 text-sm text-white outline-none transition focus:border-[#f1c75b] disabled:opacity-70">
               <option value="digital">Digital Delivery</option>
               <option value="printed">Printed Copy</option>
             </select>
@@ -524,23 +551,25 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             </div>
           ) : null}
 
-          {deliveryType === "printed" && (
+          {effectiveDeliveryType === "printed" && (
             <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.04] p-4">
               <p className="text-xs font-bold uppercase text-slate-400">Supplier and fulfillment</p>
               {selectedServiceIsPhotoFrame ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
+                    disabled={Boolean(optionFrameTier)}
                     onClick={() => setFrameFulfillmentTier("local_standard")}
-                    className={`rounded-lg border p-4 text-left transition ${frameFulfillmentTier === "local_standard" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
+                    className={`rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${selectedFrameFulfillmentTier === "local_standard" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
                   >
                     <span className="inline-flex items-center gap-2 text-sm font-black text-white"><Store size={17} /> Standard photo frame</span>
                     <p className="mt-2 text-sm leading-6 text-slate-300">Routed to local supplier for standard photo frame orders.</p>
                   </button>
                   <button
                     type="button"
+                    disabled={Boolean(optionFrameTier)}
                     onClick={() => setFrameFulfillmentTier("vistaprint_premium")}
-                    className={`rounded-lg border p-4 text-left transition ${frameFulfillmentTier === "vistaprint_premium" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
+                    className={`rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${selectedFrameFulfillmentTier === "vistaprint_premium" ? "border-[#f1c75b] bg-[#f1c75b]/10" : "border-white/10 bg-white/[0.04] hover:border-white/25"}`}
                   >
                     <span className="inline-flex items-center gap-2 text-sm font-black text-white"><PackageCheck size={17} /> Premium photo frame</span>
                     <p className="mt-2 text-sm leading-6 text-slate-300">Routed to Vistaprint for premium photo frame orders.</p>
@@ -623,7 +652,7 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
             <Info label="Total" value={`Rs. ${total}`} highlight dark />
             <Info label="Advance" value={`Rs. ${advance}`} dark />
             <Info label="Balance after work" value={`Rs. ${balance}`} dark />
-            <Info label="Fulfillment" value={deliveryType === "printed" ? (fulfillmentMethod === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
+            <Info label="Fulfillment" value={effectiveDeliveryType === "printed" ? (fulfillmentMethod === "home_delivery" ? "Home delivery" : "In-store pickup") : "Digital"} dark />
             <Info label="Supplier" value={routedSupplier} dark />
             <Info label="Prepared files" value={`${assets.length}`} dark />
           </div>
@@ -637,7 +666,12 @@ export default function OrderExperiencePage({ navigate, onOpenAuth }: OrderExper
               </div>
             </div>
           ) : null}
-          {deliveryType === "printed" && (
+          {optionFrameTier === "vistaprint_premium" && (
+            <div className="mt-5 rounded-lg border border-[#f1c75b]/30 bg-[#f1c75b]/10 p-4 text-sm leading-6 text-[#f7d880]">
+              Premium Vistaprint frame pricing is subject to the final customisation quote. Rs. 49 is the design/order advance shown now.
+            </div>
+          )}
+          {effectiveDeliveryType === "printed" && (
             <div className="mt-5 rounded-lg border border-white/10 bg-white/8 p-4 text-sm leading-6 text-slate-300">
               <span className="inline-flex items-center gap-2 font-black text-[#f7d880]"><PackageCheck size={16} /> Supplier route</span>
               <p className="mt-2">{selectedServiceIsPhotoFrame ? "Photo frames use Local for Standard and Vistaprint for Premium." : "This product is routed to Vistaprint only."}</p>

@@ -12,5 +12,9 @@ export function displayServicePrice(service: Service) {
     return "Quote after final design";
   }
 
+  if (isVistaprintService(service) && service.base_price > 0) {
+    return `From Rs. ${service.base_price}`;
+  }
+
   return `Rs. ${service.base_price}`;
 }

@@ -4,6 +4,7 @@ import { type Page } from "../hooks/useRouter";
 import { type Template } from "../types/database";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { loadPublicSnapshot } from "../lib/studioApi";
+import { VISTAPRINT_LOGO_URL } from "../lib/serviceCatalog";
 
 interface TemplatesPageProps {
   navigate: (page: Page) => void;
@@ -12,6 +13,7 @@ interface TemplatesPageProps {
 const categoryIcons: Record<string, LucideIcon> = {
   Birthday: Cake,
   Anniversary: Heart,
+  Wedding: Heart,
   Poster: FileImage,
 };
 
@@ -20,6 +22,7 @@ const tagStyles: Record<string, string> = {
   New: "bg-emerald-500 text-white",
   Premium: "bg-indigo-500 text-white",
   Bestseller: "bg-rose-500 text-white",
+  Vistaprint: "bg-white text-slate-950",
 };
 
 const EMPTY_TEMPLATES: Template[] = [];
@@ -46,7 +49,7 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-slate-300">
-              Select a template, add names, dates, messages, and photos during checkout. For made-from-idea artwork, choose Custom Sketch in services.
+              Select a Vistaprint-sourced template, add names, dates, messages, and photos during checkout. For made-from-idea artwork, choose Custom Sketch in services.
             </p>
             <button
               type="button"
@@ -102,6 +105,10 @@ export default function TemplatesPage({ navigate }: TemplatesPageProps) {
                   <span className="mt-3 block text-lg font-black text-white">{template.name}</span>
                   <span className="mt-2 line-clamp-2 text-sm leading-6 text-slate-300">
                     {template.description || "Use this design as a base for your order."}
+                  </span>
+                  <span className="mt-4 inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5">
+                    <span className="text-[10px] font-black uppercase tracking-wide text-stone-500">Powered by</span>
+                    <img src={VISTAPRINT_LOGO_URL} alt="VistaPrint" className="h-4 w-auto" loading="lazy" />
                   </span>
                   <span className="mt-5 inline-flex items-center gap-2 text-sm font-black text-[#f1c75b]">
                     Use template

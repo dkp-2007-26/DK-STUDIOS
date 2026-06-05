@@ -17,6 +17,13 @@ function normalizeFrameTier(value) {
   return value === "local_standard" ? "local_standard" : "vistaprint_premium";
 }
 
+function frameTierFromProductOptions(productOptions) {
+  const outputPackage = String(productOptions?.output_package || "").toLowerCase();
+  if (outputPackage.includes("standard photo frame")) return "local_standard";
+  if (outputPackage.includes("premium photo frame")) return "vistaprint_premium";
+  return null;
+}
+
 export async function resolveSupplierRoute(supabase, body) {
   if (body.deliveryType !== "printed") {
     return {
@@ -34,8 +41,9 @@ export async function resolveSupplierRoute(supabase, body) {
     .maybeSingle();
   if (error) throw error;
 
-  const photoFrame = isPhotoFrameService(service);
-  const frameTier = photoFrame ? normalizeFrameTier(body.frameFulfillmentTier) : null;
+  const packageFrameTier = frameTierFromProductOptions(body.productOptions);
+  const photoFrame = isPhotoFrameService(service) || Boolean(packageFrameTier);
+  const frameTier = photoFrame ? packageFrameTier || normalizeFrameTier(body.frameFulfillmentTier) : null;
   const supplier = photoFrame && frameTier === "local_standard" ? "local" : "vistaprint";
 
   return {

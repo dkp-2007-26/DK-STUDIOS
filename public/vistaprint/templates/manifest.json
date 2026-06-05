@@ -1,0 +1,86 @@
+[
+  {
+    "slug": "vp-template-wedding-1",
+    "name": "Elegant Wedding Invitation",
+    "category": "Wedding",
+    "image": "/vistaprint/templates/vp-template-wedding-1.jpg",
+    "source": "https://www.vistaprint.in/stationery/wedding-invitations/templates"
+  },
+  {
+    "slug": "vp-template-wedding-2",
+    "name": "Floral Wedding Invitation",
+    "category": "Wedding",
+    "image": "/vistaprint/templates/vp-template-wedding-2.jpg",
+    "source": "https://www.vistaprint.in/stationery/wedding-invitations/templates"
+  },
+  {
+    "slug": "vp-template-wedding-3",
+    "name": "Classic Wedding Card",
+    "category": "Wedding",
+    "image": "/vistaprint/templates/vp-template-wedding-3.jpg",
+    "source": "https://www.vistaprint.in/stationery/wedding-invitations/templates"
+  },
+  {
+    "slug": "vp-template-wedding-4",
+    "name": "Premium Wedding Card",
+    "category": "Wedding",
+    "image": "/vistaprint/templates/vp-template-wedding-4.jpg",
+    "source": "https://www.vistaprint.in/stationery/wedding-invitations/templates"
+  },
+  {
+    "slug": "vp-template-birthday-1",
+    "name": "Birthday Party Invitation",
+    "category": "Birthday",
+    "image": "/vistaprint/templates/vp-template-birthday-1.jpg",
+    "source": "https://www.vistaprint.in/stationery/birthday-invitation-cards/templates"
+  },
+  {
+    "slug": "vp-template-birthday-2",
+    "name": "Kids Birthday Invite",
+    "category": "Birthday",
+    "image": "/vistaprint/templates/vp-template-birthday-2.jpg",
+    "source": "https://www.vistaprint.in/stationery/birthday-invitation-cards/templates"
+  },
+  {
+    "slug": "vp-template-birthday-3",
+    "name": "Modern Birthday Card",
+    "category": "Birthday",
+    "image": "/vistaprint/templates/vp-template-birthday-3.jpg",
+    "source": "https://www.vistaprint.in/stationery/birthday-invitation-cards/templates"
+  },
+  {
+    "slug": "vp-template-birthday-4",
+    "name": "Premium Birthday Invite",
+    "category": "Birthday",
+    "image": "/vistaprint/templates/vp-template-birthday-4.jpg",
+    "source": "https://www.vistaprint.in/stationery/birthday-invitation-cards/templates"
+  },
+  {
+    "slug": "vp-template-poster-1",
+    "name": "Event Poster Template",
+    "category": "Poster",
+    "image": "/vistaprint/templates/vp-template-poster-1.jpg",
+    "source": "https://www.vistaprint.in/signs-posters/posters/templates"
+  },
+  {
+    "slug": "vp-template-poster-2",
+    "name": "Business Poster Template",
+    "category": "Poster",
+    "image": "/vistaprint/templates/vp-template-poster-2.jpg",
+    "source": "https://www.vistaprint.in/signs-posters/posters/templates"
+  },
+  {
+    "slug": "vp-template-poster-3",
+    "name": "Sale Poster Template",
+    "category": "Poster",
+    "image": "/vistaprint/templates/vp-template-poster-3.jpg",
+    "source": "https://www.vistaprint.in/signs-posters/posters/templates"
+  },
+  {
+    "slug": "vp-template-poster-4",
+    "name": "Announcement Poster Template",
+    "category": "Poster",
+    "image": "/vistaprint/templates/vp-template-poster-4.jpg",
+    "source": "https://www.vistaprint.in/signs-posters/posters/templates"
+  }
+]

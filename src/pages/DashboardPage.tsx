@@ -11,18 +11,18 @@ interface DashboardProps {
 const LAST_ORDER_ID_KEY = "d.k-studios.lastOrderId";
 
 const statusConfig = {
-  pending: { label: "Pending", color: "border-amber-300/25 bg-amber-300/10 text-amber-200", icon: Clock },
-  confirmed: { label: "Confirmed", color: "border-sky-300/25 bg-sky-300/10 text-sky-200", icon: CheckCircle },
-  in_progress: { label: "In Progress", color: "border-orange-300/25 bg-orange-300/10 text-orange-200", icon: RefreshCw },
-  completed: { label: "Completed", color: "border-emerald-300/25 bg-emerald-300/10 text-emerald-200", icon: CheckCircle },
+  pending: { label: "Waiting for booking", color: "border-amber-300/25 bg-amber-300/10 text-amber-200", icon: Clock },
+  confirmed: { label: "Booked", color: "border-sky-300/25 bg-sky-300/10 text-sky-200", icon: CheckCircle },
+  in_progress: { label: "We're working on it", color: "border-orange-300/25 bg-orange-300/10 text-orange-200", icon: RefreshCw },
+  completed: { label: "Ready", color: "border-emerald-300/25 bg-emerald-300/10 text-emerald-200", icon: CheckCircle },
   cancelled: { label: "Cancelled", color: "border-red-300/25 bg-red-300/10 text-red-200", icon: XCircle },
 };
 
 const paymentStatusConfig = {
-  pending: { label: "Payment Pending", color: "text-amber-200" },
-  paid: { label: "Paid", color: "text-emerald-200" },
+  pending: { label: "Booking pending", color: "text-amber-200" },
+  paid: { label: "Booking confirmed", color: "text-emerald-200" },
   refunded: { label: "Refunded", color: "text-sky-200" },
-  failed: { label: "Failed", color: "text-red-200" },
+  failed: { label: "Payment needs help", color: "text-red-200" },
 };
 
 function supplierLabel(order: Order) {
@@ -47,10 +47,10 @@ export default function DashboardPage({ navigate }: DashboardProps) {
     if (!order) return [];
     const fulfillmentLabel = order.fulfillment_method === "home_delivery" ? "Home delivery" : "Ready for pickup";
     return [
-      { label: "Order received", active: true },
-      { label: "Payment confirmed", active: order.payment_status === "paid" },
-      { label: "Studio started", active: order.status === "in_progress" || order.status === "completed" },
-      { label: order.delivery_type === "printed" ? fulfillmentLabel : "Completed", active: order.status === "completed" },
+      { label: "We received your idea", active: true },
+      { label: "Booking confirmed", active: order.payment_status === "paid" },
+      { label: "Great news - we've started your design", active: order.status === "in_progress" || order.status === "completed" },
+      { label: order.delivery_type === "printed" ? fulfillmentLabel : "Final file is ready", active: order.status === "completed" },
     ];
   }, [order]);
 
@@ -84,11 +84,11 @@ export default function DashboardPage({ navigate }: DashboardProps) {
             <p className="text-sm font-bold uppercase text-[#f1c75b]">Order access</p>
             <h1 className="mt-3 text-4xl font-black leading-tight sm:text-6xl">Track your order</h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-              Enter the order id from your bill or checkout confirmation. No customer account is required.
+              Enter the order id from your bill or checkout message. No customer account is required.
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-            Use the exact order id or bill number from checkout. Your files and payment status stay protected in the studio workflow.
+            Use the exact order id or bill number. Your files and order details stay private.
           </div>
         </div>
 

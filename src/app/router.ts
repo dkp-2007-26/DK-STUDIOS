@@ -7,6 +7,7 @@ export type Page =
   | 'dashboard'
   | 'order'
   | 'review'
+  | 'reset-password'
   | 'admin-secure-login'
   | 'admin-dashboard'
   | 'delivery-secure-login'
@@ -21,6 +22,7 @@ export const VALID_PAGES: Page[] = [
   'dashboard',
   'order',
   'review',
+  'reset-password',
   'admin-secure-login',
   'admin-dashboard',
   'delivery-secure-login',

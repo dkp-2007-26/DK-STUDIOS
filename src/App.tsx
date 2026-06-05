@@ -11,7 +11,7 @@ import { setGlitchTipRoute, setGlitchTipUser } from './lib/glitchtip';
 function AppContent() {
   const { page, navigate } = useRouter();
   const { loading, user } = useAuth();
-  const [authModal, setAuthModal] = useState<'login' | 'signup' | null>(null);
+  const [authModal, setAuthModal] = useState<'login' | 'forgot' | null>(null);
 
   useEffect(() => {
     setGlitchTipRoute(page);

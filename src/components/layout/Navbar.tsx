@@ -7,7 +7,7 @@ import { BRAND_LOGO_SRC, BRAND_NAME } from "../../lib/brand";
 interface NavbarProps {
   currentPage: Page;
   navigate: (page: Page) => void;
-  onOpenAuth: (mode: "login" | "signup") => void;
+  onOpenAuth: (mode: "login" | "forgot") => void;
 }
 
 export default function Navbar({ currentPage, navigate, onOpenAuth }: NavbarProps) {

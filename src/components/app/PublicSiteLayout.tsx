@@ -7,7 +7,7 @@ import FloatingWhatsAppButton from './FloatingWhatsAppButton';
 interface PublicSiteLayoutProps {
   currentPage: Page;
   navigate: (page: Page) => void;
-  onOpenAuth: (mode: 'login' | 'signup') => void;
+  onOpenAuth: (mode: 'login' | 'forgot') => void;
   children: ReactNode;
 }
 

@@ -10,11 +10,12 @@ import AdminOperationsPage from '../pages/AdminOperationsPage';
 import DeliveryLoginPage from '../pages/DeliveryLoginPage';
 import DeliveryScanPage from '../pages/DeliveryScanPage';
 import ReviewPage from '../pages/ReviewPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
 
 interface AppRoutesProps {
   page: Page;
   navigate: (page: Page) => void;
-  onOpenAuth: (mode: 'login' | 'signup') => void;
+  onOpenAuth: (mode: 'login' | 'forgot') => void;
 }
 
 export default function AppRoutes({ page, navigate, onOpenAuth }: AppRoutesProps) {
@@ -32,6 +33,8 @@ export default function AppRoutes({ page, navigate, onOpenAuth }: AppRoutesProps
       return <OrderExperiencePage navigate={navigate} onOpenAuth={onOpenAuth} />;
     case 'review':
       return <ReviewPage navigate={navigate} />;
+    case 'reset-password':
+      return <ResetPasswordPage navigate={navigate} />;
     case 'admin-secure-login':
       return <AdminLoginPage navigate={navigate} />;
     case 'admin-dashboard':

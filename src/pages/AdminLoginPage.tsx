@@ -10,16 +10,19 @@ interface AdminLoginProps {
 }
 
 export default function AdminLoginPage({ navigate }: AdminLoginProps) {
-  const { signIn, signOut } = useAuth();
+  const { signIn, signOut, sendPasswordReset } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
 
     const { error: signInErr, user } = await signIn(form.email, form.password);
     if (signInErr) {
@@ -38,6 +41,23 @@ export default function AdminLoginPage({ navigate }: AdminLoginProps) {
     markAdminAccessVerified(user.id);
     navigate("admin-dashboard");
     setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!form.email.trim()) {
+      setError("Enter your admin email first.");
+      return;
+    }
+    setResetLoading(true);
+    setError("");
+    setSuccess("");
+    const { error: resetError } = await sendPasswordReset(form.email.trim());
+    if (resetError) {
+      setError(resetError.message || "Could not send password reset email.");
+    } else {
+      setSuccess(`Password reset email sent to ${form.email.trim()}.`);
+    }
+    setResetLoading(false);
   };
 
   return (
@@ -141,6 +161,11 @@ export default function AdminLoginPage({ navigate }: AdminLoginProps) {
                     {error}
                   </div>
                 )}
+                {success && (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                    {success}
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -149,6 +174,14 @@ export default function AdminLoginPage({ navigate }: AdminLoginProps) {
                 >
                   {loading ? "Checking access..." : "Open admin panel"}
                   {!loading && <ShieldCheck size={18} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleForgotPassword()}
+                  disabled={resetLoading || loading}
+                  className="text-sm font-bold text-[#8a5b12] underline underline-offset-4 transition hover:text-slate-950 disabled:opacity-60"
+                >
+                  {resetLoading ? "Sending reset email..." : "Forgot password?"}
                 </button>
               </form>
             </div>

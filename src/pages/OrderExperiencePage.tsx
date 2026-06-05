@@ -22,7 +22,7 @@ import {
 
 interface OrderExperiencePageProps {
   navigate: (page: Page) => void;
-  onOpenAuth: (mode: "login" | "signup") => void;
+  onOpenAuth: (mode: "login" | "forgot") => void;
 }
 
 type RazorpayCheckoutSession = {

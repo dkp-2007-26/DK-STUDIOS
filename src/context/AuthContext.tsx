@@ -18,9 +18,9 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isDelivery: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null; user: AuthUser | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  sendPasswordReset: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -43,6 +43,19 @@ function toAuthUser(session: Session | null): AuthUser | null {
     isAdmin: role === "admin",
     isDelivery: role === "delivery" || role === "admin",
     role,
+  };
+}
+
+function toProfileAuthUser(session: Session | null, profile: { display_name: string | null; role: AuthUser["role"]; is_admin: boolean } | null): AuthUser | null {
+  const baseUser = toAuthUser(session);
+  if (!baseUser) return null;
+  const role = profile?.role ?? baseUser.role;
+  return {
+    ...baseUser,
+    displayName: profile?.display_name ?? baseUser.displayName,
+    role,
+    isAdmin: profile?.is_admin || role === "admin",
+    isDelivery: role === "delivery" || role === "admin",
   };
 }
 
@@ -102,33 +115,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = !!user?.isAdmin;
   const isDelivery = !!user?.isDelivery;
 
-  const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: name,
-          role: "customer",
-        },
-      },
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    let nextProfile: { display_name: string | null; role: AuthUser["role"]; is_admin: boolean } | null = null;
+    if (data.session?.user?.id) {
+      const { data: profileData } = await supabase
+        .from("app_users")
+        .select("display_name, role, is_admin")
+        .eq("auth_user_id", data.session.user.id)
+        .maybeSingle();
+      nextProfile = profileData as typeof nextProfile;
+      setProfile(nextProfile);
+    }
+    const nextUser = toProfileAuthUser(data.session ?? null, nextProfile);
+    return { error: error ? new Error(error.message) : null, user: nextUser };
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     return { error: error ? new Error(error.message) : null };
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    const nextUser = toAuthUser(data.session ?? null);
-    return { error: error ? new Error(error.message) : null, user: nextUser };
-  };
-
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
     return { error: error ? new Error(error.message) : null };
   };
 
@@ -138,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, sessionToken, loading, isAdmin, isDelivery, signUp, signIn, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, session, sessionToken, loading, isAdmin, isDelivery, signIn, sendPasswordReset, updatePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );

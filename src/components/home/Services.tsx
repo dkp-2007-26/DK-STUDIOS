@@ -38,12 +38,12 @@ export default function Services({ navigate }: ServicesProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#8a5b12]">Studio menu</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              Design work people can order without confusion.
+              Digital edits and printed products people can order without confusion.
             </h2>
           </div>
           <div className="lg:max-w-xl lg:justify-self-end">
             <p className="text-base leading-8 text-stone-700">
-              Pick a service, upload photos, pay the advance through DK STUDIOS Razorpay, and track the order with your order id.
+              Choose retouching, a colour or black and white digital sketch, poster work, or a Vistaprint-powered product. Upload the final file, pay the advance, and track the order with your order id.
             </p>
             <button
               type="button"

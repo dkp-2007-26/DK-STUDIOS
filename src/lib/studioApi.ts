@@ -16,6 +16,14 @@ export type AdminSnapshot = {
   analytics: AnalyticsOverview;
 };
 
+export type RazorpayAdminStatus = {
+  configured: boolean;
+  mode: "test" | "live" | "unknown";
+  key_id_masked: string;
+  key_id_prefix: string;
+  secret_configured: boolean;
+};
+
 export type PromoPreview = {
   code: string;
   description: string | null;
@@ -73,6 +81,7 @@ export const getReviewByToken = (reviewToken: string) => studioApi<Review | null
 export const submitReview = (input: Record<string, unknown>) => studioApi<Review>({ action: "reviews.submit", ...input });
 
 export const loadAdminSnapshot = () => studioApi<AdminSnapshot>({ action: "admin.snapshot" }, true);
+export const getAdminRazorpayStatus = () => studioApi<RazorpayAdminStatus>({ action: "admin.razorpayStatus" }, true);
 export const updateAdminOrder = (input: Record<string, unknown>) =>
   studioApi<Order>({ action: "admin.updateOrder", ...input }, true);
 export const upsertAdminService = (input: Record<string, unknown>) =>

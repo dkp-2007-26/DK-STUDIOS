@@ -88,4 +88,18 @@ export function requireRazorpayEnv() {
   };
 }
 
+export function getRazorpayStatus() {
+  const keyId = readEnv("RAZORPAY_KEY_ID");
+  const keySecret = readEnv("RAZORPAY_KEY_SECRET");
+  const mode = keyId.startsWith("rzp_test_") ? "test" : keyId.startsWith("rzp_live_") ? "live" : "unknown";
+  const maskedKeyId = keyId ? `${keyId.slice(0, 9)}...${keyId.slice(-4)}` : "";
+  return {
+    configured: Boolean(keyId && keySecret),
+    mode,
+    key_id_masked: maskedKeyId,
+    key_id_prefix: keyId ? keyId.slice(0, 8) : "",
+    secret_configured: Boolean(keySecret),
+  };
+}
+
 export { SupabaseServerError };

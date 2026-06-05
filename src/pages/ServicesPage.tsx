@@ -26,9 +26,9 @@ const categoryStyles: Record<string, string> = {
 };
 
 const perks = [
-  "Photo upload and order details in one flow",
+  "Final design upload and order details in one flow",
   "Advance payment through DK STUDIOS Razorpay",
-  "Digital delivery with print pickup option",
+  "Digital services plus Vistaprint-powered print delivery",
   "Order-id tracking after order creation",
 ];
 
@@ -45,12 +45,12 @@ export default function ServicesPage({ navigate }: ServicesPageProps) {
           <div>
             <p className="text-sm font-bold uppercase text-[#8a5b12]">Services</p>
             <h1 className="mt-3 text-5xl font-black leading-tight sm:text-6xl">
-              Clear options for photo edits, posters, sketches, and prints.
+              Clear options for retouching, digital sketches, posters, and prints.
             </h1>
           </div>
           <div>
             <p className="max-w-2xl text-base leading-8 text-stone-700">
-              Choose the work you need, add personal instructions, upload your photos, and pay the advance securely.
+              Choose the work you need, select product options, upload your final design or photo, and pay the advance securely.
             </p>
             <button
               type="button"

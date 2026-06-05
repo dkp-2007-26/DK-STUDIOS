@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { getSupabaseServiceClient, requireRazorpayEnv, requireRole, SupabaseServerError } from "../lib/supabase-server.js";
+import { getRazorpayStatus, getSupabaseServiceClient, requireRazorpayEnv, requireRole, SupabaseServerError } from "../lib/supabase-server.js";
 import { createSupplierFulfillmentJob, resolveSupplierRoute } from "../lib/supplier-fulfillment.js";
 import {
   captureFunctionError,
@@ -818,6 +818,7 @@ export default async (request) => {
     if (action.startsWith("admin.")) {
       const { appUser } = await requireRole(token, ["admin"]);
       if (action === "admin.snapshot") return json(await adminSnapshot(supabase));
+      if (action === "admin.razorpayStatus") return json(getRazorpayStatus());
       if (action === "admin.updateOrder") return json(await updateOrder(supabase, body));
       if (action === "admin.upsertService") return json(await upsertService(supabase, body));
       if (action === "admin.upsertPromotion") return json(await upsertPromotion(supabase, body));

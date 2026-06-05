@@ -8,9 +8,9 @@ interface HeroProps {
 }
 
 const proofPoints = [
-  { icon: ImagePlus, label: "Upload photos", value: "Google Drive backed" },
+  { icon: ImagePlus, label: "Upload design", value: "Final files accepted" },
   { icon: CreditCard, label: "Advance payment", value: PAYMENT_PROVIDER_NAME },
-  { icon: PackageCheck, label: "Collect print", value: "At DK BOOK" },
+  { icon: PackageCheck, label: "Print delivery", value: "Vistaprint powered" },
 ];
 
 export default function Hero({ navigate }: HeroProps) {
@@ -42,7 +42,7 @@ export default function Hero({ navigate }: HeroProps) {
             {BRAND_NAME}
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
-            Photo edits, poster designs, sketches, and printed keepsakes made with a clean order flow, secure uploads, and DK STUDIOS checkout support.
+            Retouching, digital sketches, poster design, and Vistaprint-powered printed products in one clean order flow with secure uploads and DK STUDIOS checkout support.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">

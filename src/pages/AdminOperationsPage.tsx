@@ -3,6 +3,7 @@ import { BarChart3, CheckCircle2, Clock3, CreditCard, LogOut, RefreshCw, Search,
 import { useAuth } from "../context/AuthContext";
 import type { Page } from "../hooks/useRouter";
 import {
+  getAdminRazorpayStatus,
   loadAdminSnapshot,
   updateAdminOrder,
   upsertAdminPromotion,
@@ -11,12 +12,13 @@ import {
   type AdminSnapshot,
 } from "../lib/studioApi";
 import type { Order, Promotion, Review, Service } from "../types/database";
+import type { RazorpayAdminStatus } from "../lib/studioApi";
 
 interface AdminOperationsPageProps {
   navigate: (page: Page) => void;
 }
 
-type AdminTab = "orders" | "services" | "promotions" | "reviews" | "analytics";
+type AdminTab = "orders" | "services" | "promotions" | "reviews" | "payments" | "analytics";
 
 const statusConfig: Record<Order["status"], string> = {
   pending: "border-amber-200 bg-amber-50 text-amber-800",
@@ -56,6 +58,7 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
   const [search, setSearch] = useState("");
   const [serviceForm, setServiceForm] = useState({ code: "", name: "", description: "", basePrice: 99, printPrice: 0, category: "print", isActive: true, sortOrder: 10 });
   const [promoForm, setPromoForm] = useState({ code: "", description: "", discount: 10, maxUses: 100, validUntil: "", isActive: true });
+  const [razorpayStatus, setRazorpayStatus] = useState<RazorpayAdminStatus | null>(null);
 
   const orders = useMemo(() => snapshot?.orders ?? [], [snapshot?.orders]);
   const services = useMemo(() => snapshot?.services ?? [], [snapshot?.services]);
@@ -125,6 +128,15 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
     await refresh();
   };
 
+  const loadRazorpayStatus = async () => {
+    setError("");
+    try {
+      setRazorpayStatus(await getAdminRazorpayStatus());
+    } catch (statusError) {
+      setError((statusError as Error).message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f7f2e8] text-stone-950">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -159,7 +171,7 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
         </div>
 
         <nav className="mt-5 flex gap-2 overflow-x-auto rounded-lg border border-stone-200 bg-white p-2">
-          {(["orders", "services", "promotions", "reviews", "analytics"] as AdminTab[]).map((item) => (
+          {(["orders", "services", "promotions", "reviews", "payments", "analytics"] as AdminTab[]).map((item) => (
             <button key={item} type="button" onClick={() => setTab(item)} className={`rounded-lg px-4 py-2 text-sm font-black capitalize ${tab === item ? "bg-stone-950 text-white" : "text-stone-600 hover:bg-stone-100"}`}>
               {item}
             </button>
@@ -203,6 +215,40 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
             {reviews.map((review) => (
               <ReviewCard key={review.id} review={review} onModerate={async (status) => { await moderateAdminReview({ reviewId: review.id, status }); await refresh(); }} />
             ))}
+          </section>
+        )}
+
+        {!loading && tab === "payments" && (
+          <section className="mt-6 rounded-lg border border-stone-200 bg-white p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase text-[#8a5b12]">Razorpay testing</p>
+                <h2 className="mt-1 text-xl font-black">Checkout configuration</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
+                  This panel verifies server-side Razorpay environment variables without exposing the secret key to the browser.
+                </p>
+              </div>
+              <button type="button" onClick={() => void loadRazorpayStatus()} className="inline-flex items-center justify-center gap-2 rounded-lg bg-stone-950 px-4 py-3 text-sm font-black text-white">
+                <RefreshCw size={16} /> Check Razorpay
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Info label="Configured" value={razorpayStatus?.configured ? "Yes" : razorpayStatus ? "No" : "Not checked"} />
+              <Info label="Mode" value={razorpayStatus?.mode ?? "Not checked"} />
+              <Info label="Key ID" value={razorpayStatus?.key_id_masked || "Hidden"} />
+              <Info label="Secret" value={razorpayStatus?.secret_configured ? "Configured server-side" : razorpayStatus ? "Missing" : "Not checked"} />
+            </div>
+
+            <div className="mt-5 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+              <p className="font-black">Test checkout credentials</p>
+              <p className="mt-2">Use Razorpay test mode cards/UPI in the checkout popup. The current advance amount is Rs. 49.</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <Info label="Test card" value="4111 1111 1111 1111" />
+                <Info label="Expiry / CVV" value="Any future date / any CVV" />
+                <Info label="Test UPI" value="success@razorpay" />
+              </div>
+            </div>
           </section>
         )}
 

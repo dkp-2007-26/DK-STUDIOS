@@ -24,10 +24,10 @@ export default function Contact() {
           <div>
             <p className="text-sm font-bold uppercase text-[#89d4d2]">Contact</p>
             <h2 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-              Message DK STUDIOS for custom work.
+              Tell us what you're trying to make.
             </h2>
             <p className="mt-5 text-base leading-8 text-slate-300">
-              Send a note, open WhatsApp, or call the studio. For full orders, the checkout flow collects files and payment details.
+              Send a note, open WhatsApp, or call us. If you're ready to order, checkout will collect your files and payment details properly.
             </p>
 
             <div className="mt-8 grid gap-3">
@@ -79,13 +79,13 @@ export default function Contact() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/12 bg-[#070a0f] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-7">
+          <div className="flex rounded-lg border border-white/12 bg-[#070a0f] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-7">
             {submitted ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
+              <div className="flex min-h-[420px] flex-1 flex-col items-center justify-center text-center">
                 <CheckCircle size={46} className="text-emerald-500" />
                 <h3 className="mt-5 text-2xl font-black">Message received</h3>
                 <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
-                  Thanks for contacting {BRAND_NAME}. We will reply with the next step.
+                  Thanks for contacting {BRAND_NAME}. We'll reply with the next step.
                 </p>
                 <button
                   type="button"
@@ -96,11 +96,11 @@ export default function Contact() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="grid gap-4">
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4">
+                <div className="shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-4">
                   <p className="text-xs font-black uppercase text-[#f7d880]">Message form</p>
-                  <h3 className="mt-2 text-2xl font-black text-white">Tell DK STUDIOS what you need.</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">Share your idea, print requirement, or order question. We will reply with the next step.</p>
+                  <h3 className="mt-2 text-2xl font-black text-white">Tell us what you need.</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">Share your idea, print requirement, or order question. We'll reply with the next step.</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-sm font-bold text-slate-200">
@@ -136,21 +136,21 @@ export default function Contact() {
                     placeholder="you@example.com"
                   />
                 </label>
-                <label className="grid gap-2 text-sm font-bold text-slate-200">
+                <label className="flex min-h-[180px] flex-1 flex-col gap-2 text-sm font-bold text-slate-200">
                   Message :
                   <textarea
                     required
-                    rows={6}
+                    rows={8}
                     value={form.message}
                     onChange={(event) => setForm({ ...form, message: event.target.value })}
-                    className="resize-none rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
+                    className="min-h-[180px] flex-1 resize-none rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#f1c75b]"
                     placeholder="Tell us what you need"
                   />
                 </label>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-slate-950 transition hover:bg-[#ffdc73] disabled:opacity-70"
+                  className="mt-auto inline-flex shrink-0 items-center justify-center gap-3 rounded-lg bg-[#f1c75b] px-6 py-4 text-sm font-black text-slate-950 transition hover:bg-[#ffdc73] disabled:opacity-70"
                 >
                   {loading ? "Sending..." : "Send message"}
                   {!loading && <Send size={17} />}

@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import Razorpay from "razorpay";
 import { getRazorpayStatus, getSupabaseServiceClient, requireRazorpayEnv, requireRole, SupabaseServerError } from "../lib/supabase-server.js";
 import { createSupplierFulfillmentJob, resolveSupplierRoute } from "../lib/supplier-fulfillment.js";
 import {
@@ -269,18 +270,82 @@ function makeBillNumber() {
   return `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
 }
 
-function createBasicAuthHeader(keyId, keySecret) {
-  return `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`;
-}
-
 function createRazorpayPaymentSignature(providerOrderId, providerPaymentId, keySecret) {
   return createHmac("sha256", keySecret).update(`${providerOrderId}|${providerPaymentId}`).digest("hex");
 }
 
 function timingSafeEqualHex(left, right) {
+  if (!/^[a-f0-9]+$/i.test(String(left)) || !/^[a-f0-9]+$/i.test(String(right))) {
+    return false;
+  }
   const leftBuffer = Buffer.from(left, "hex");
   const rightBuffer = Buffer.from(right, "hex");
   return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function normalizeRazorpayAmountPaise(amount, label = "Razorpay amount") {
+  const normalizedAmount = Number(amount);
+  if (!Number.isFinite(normalizedAmount)) {
+    throw new SupabaseServerError(`Enter a valid ${label}.`, 400);
+  }
+  const amountPaise = Math.round(normalizedAmount * 100);
+  if (amountPaise < 100) {
+    throw new SupabaseServerError(`${label} must be at least Rs. 1.`, 400);
+  }
+  if (amountPaise > 50000000) {
+    throw new SupabaseServerError(`${label} cannot exceed Rs. 5,00,000.`, 400);
+  }
+  return amountPaise;
+}
+
+function createRazorpayClient() {
+  const { keyId, keySecret } = requireRazorpayEnv();
+  return {
+    keyId,
+    keySecret,
+    client: new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    }),
+  };
+}
+
+function razorpayApiErrorStatus(error) {
+  const statusCode = Number(error?.statusCode ?? error?.status ?? error?.response?.status ?? error?.error?.status_code);
+  return statusCode === 401 || statusCode === 403 ? 401 : 500;
+}
+
+function razorpayApiErrorMessage(error) {
+  const apiError = error?.error && typeof error.error === "object" ? error.error : {};
+  const message = apiError.description || apiError.reason || error?.message || "Razorpay API request failed.";
+  return String(message).slice(0, 240);
+}
+
+async function createRazorpayOrder({ amountPaise, receipt, notes, errorPrefix }) {
+  const { keyId, client } = createRazorpayClient();
+  try {
+    const razorpayOrder = await client.orders.create({
+      amount: amountPaise,
+      currency: "INR",
+      receipt: String(receipt).slice(0, 40),
+      notes,
+    });
+    return { keyId, razorpayOrder };
+  } catch (error) {
+    throw new SupabaseServerError(`${errorPrefix}: ${razorpayApiErrorMessage(error)}`, razorpayApiErrorStatus(error));
+  }
+}
+
+function requireRazorpayPaymentFields(body, fields) {
+  const values = {};
+  for (const field of fields) {
+    const value = String(body[field] || "").trim();
+    if (!value) {
+      throw new SupabaseServerError("Missing Razorpay payment verification fields.", 400);
+    }
+    values[field] = value;
+  }
+  return values;
 }
 
 function normalizeFulfillment(body) {
@@ -508,15 +573,16 @@ async function getOrderById(supabase, orderId) {
 }
 
 async function createRazorpayCheckout(supabase, orderId) {
-  const { keyId, keySecret } = requireRazorpayEnv();
+  const { keyId } = requireRazorpayEnv();
   const { data: order, error } = await supabase.from("orders").select("*").eq("id", orderId).single();
   if (error || !order) throw new SupabaseServerError("Order not found.", 404);
+  const amountPaise = normalizeRazorpayAmountPaise(order.advance_amount, "Razorpay checkout amount");
   if (order.payment_status === "paid") {
     return {
       already_paid: true,
       provider_order_id: order.payment_order_id || "",
       key_id: keyId,
-      amount_paise: Math.round(Number(order.advance_amount) * 100),
+      amount_paise: amountPaise,
       currency: "INR",
       customer_name: order.customer_name,
       customer_email: order.customer_email,
@@ -529,7 +595,7 @@ async function createRazorpayCheckout(supabase, orderId) {
       already_paid: false,
       provider_order_id: order.payment_order_id,
       key_id: keyId,
-      amount_paise: Math.round(Number(order.advance_amount) * 100),
+      amount_paise: amountPaise,
       currency: "INR",
       customer_name: order.customer_name,
       customer_email: order.customer_email,
@@ -537,28 +603,17 @@ async function createRazorpayCheckout(supabase, orderId) {
       receipt: order.bill_number || order.id,
     };
   }
-  const amountPaise = Math.round(Number(order.advance_amount) * 100);
-  const response = await fetch("https://api.razorpay.com/v1/orders", {
-    method: "POST",
-    headers: {
-      Authorization: createBasicAuthHeader(keyId, keySecret),
-      "Content-Type": "application/json",
+  const checkout = await createRazorpayOrder({
+    amountPaise,
+    receipt: order.bill_number || order.id,
+    errorPrefix: "Razorpay order creation failed",
+    notes: {
+      dk_studios_order_id: order.id,
+      bill_number: order.bill_number,
+      account: "DK STUDIOS",
     },
-    body: JSON.stringify({
-      amount: amountPaise,
-      currency: "INR",
-      receipt: String(order.bill_number || order.id).slice(0, 40),
-      notes: {
-        dk_studios_order_id: order.id,
-        bill_number: order.bill_number,
-        account: "DK STUDIOS",
-      },
-    }),
   });
-  if (!response.ok) {
-    throw new SupabaseServerError(`Razorpay order creation failed (${response.status}): ${(await response.text()).slice(0, 300)}`, 502);
-  }
-  const razorpayOrder = await response.json();
+  const razorpayOrder = checkout.razorpayOrder;
   const now = new Date().toISOString();
   const update = await supabase
     .from("orders")
@@ -580,7 +635,7 @@ async function createRazorpayCheckout(supabase, orderId) {
   return {
     already_paid: false,
     provider_order_id: razorpayOrder.id,
-    key_id: keyId,
+    key_id: checkout.keyId,
     amount_paise: amountPaise,
     currency: razorpayOrder.currency,
     customer_name: order.customer_name,
@@ -592,38 +647,90 @@ async function createRazorpayCheckout(supabase, orderId) {
 
 async function verifyRazorpayPayment(supabase, body) {
   const { keySecret } = requireRazorpayEnv();
-  const expected = createRazorpayPaymentSignature(body.providerOrderId, body.providerPaymentId, keySecret);
-  if (!timingSafeEqualHex(expected, body.providerSignature)) {
+  const { orderId, providerOrderId, providerPaymentId, providerSignature } = requireRazorpayPaymentFields(body, [
+    "orderId",
+    "providerOrderId",
+    "providerPaymentId",
+    "providerSignature",
+  ]);
+  const expected = createRazorpayPaymentSignature(providerOrderId, providerPaymentId, keySecret);
+  if (!timingSafeEqualHex(expected, providerSignature)) {
     throw new SupabaseServerError("Razorpay payment signature verification failed.", 400);
   }
-  const { data: order, error } = await supabase.from("orders").select("*").eq("id", body.orderId).single();
-  if (error || !order || order.payment_order_id !== body.providerOrderId) {
+  const { data: order, error } = await supabase.from("orders").select("*").eq("id", orderId).single();
+  if (error || !order || order.payment_order_id !== providerOrderId) {
     throw new SupabaseServerError("Razorpay order id does not match this order.", 400);
   }
   const now = new Date().toISOString();
   const payment = await supabase
     .from("payments")
     .update({
-      provider_payment_id: body.providerPaymentId,
-      provider_signature: body.providerSignature,
+      provider_payment_id: providerPaymentId,
+      provider_signature: providerSignature,
       status: "paid",
       amount: Number(order.advance_amount),
       updated_at: now,
     })
-    .eq("provider_order_id", body.providerOrderId);
+    .eq("provider_order_id", providerOrderId);
   if (payment.error) throw new SupabaseServerError(payment.error.message, 500);
   const orderUpdate = await supabase
     .from("orders")
     .update({
       status: order.status === "pending" ? "confirmed" : order.status,
       payment_status: "paid",
-      payment_id: body.providerPaymentId,
+      payment_id: providerPaymentId,
       payment_completed_at: now,
       updated_at: now,
     })
     .eq("id", order.id);
   if (orderUpdate.error) throw new SupabaseServerError(orderUpdate.error.message, 500);
-  return { ok: true, order_id: order.id, provider_order_id: body.providerOrderId, provider_payment_id: body.providerPaymentId };
+  return { ok: true, order_id: order.id, provider_order_id: providerOrderId, provider_payment_id: providerPaymentId };
+}
+
+async function createAdminRazorpayTestCheckout(body, appUser) {
+  const amountPaise = normalizeRazorpayAmountPaise(body.amount, "Razorpay test amount");
+  const receipt = `ADMIN-TEST-${Date.now()}`.slice(0, 40);
+  const checkout = await createRazorpayOrder({
+    amountPaise,
+    receipt,
+    errorPrefix: "Razorpay test order creation failed",
+    notes: {
+      account: "DK STUDIOS",
+      purpose: "admin_payment_gateway_test",
+      admin_user_id: appUser.id,
+      admin_email: appUser.email,
+    },
+  });
+  const razorpayOrder = checkout.razorpayOrder;
+  return {
+    provider_order_id: razorpayOrder.id,
+    key_id: checkout.keyId,
+    amount_paise: amountPaise,
+    currency: razorpayOrder.currency,
+    receipt,
+    customer_name: "DK STUDIOS Admin",
+    customer_email: appUser.email,
+    customer_phone: null,
+    description: `Admin gateway test - Rs. ${(amountPaise / 100).toFixed(2)}`,
+  };
+}
+
+async function verifyAdminRazorpayTestPayment(body) {
+  const { keySecret } = requireRazorpayEnv();
+  const { providerOrderId, providerPaymentId, providerSignature } = requireRazorpayPaymentFields(body, [
+    "providerOrderId",
+    "providerPaymentId",
+    "providerSignature",
+  ]);
+  const expected = createRazorpayPaymentSignature(providerOrderId, providerPaymentId, keySecret);
+  if (!timingSafeEqualHex(expected, providerSignature)) {
+    throw new SupabaseServerError("Razorpay test payment signature verification failed.", 400);
+  }
+  return {
+    ok: true,
+    provider_order_id: providerOrderId,
+    provider_payment_id: providerPaymentId,
+  };
 }
 
 async function adminSnapshot(supabase) {
@@ -839,6 +946,8 @@ export default async (request) => {
       const { appUser } = await requireRole(token, ["admin"]);
       if (action === "admin.snapshot") return json(await adminSnapshot(supabase));
       if (action === "admin.razorpayStatus") return json(getRazorpayStatus());
+      if (action === "admin.createRazorpayTestCheckout") return json(await createAdminRazorpayTestCheckout(body, appUser));
+      if (action === "admin.verifyRazorpayTestPayment") return json(await verifyAdminRazorpayTestPayment(body));
       if (action === "admin.updateOrder") return json(await updateOrder(supabase, body));
       if (action === "admin.upsertService") return json(await upsertService(supabase, body));
       if (action === "admin.upsertPromotion") return json(await upsertPromotion(supabase, body));

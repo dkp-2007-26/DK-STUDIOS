@@ -3,14 +3,14 @@ import { BarChart3, CheckCircle2, Clock3, CreditCard, LogOut, RefreshCw, Search,
 import { useAuth } from "../context/AuthContext";
 import type { Page } from "../hooks/useRouter";
 import {
-  createAdminRazorpayTestCheckout,
+  createAdminRazorpayLiveCheckout,
   getAdminRazorpayStatus,
   loadAdminSnapshot,
   updateAdminOrder,
   upsertAdminPromotion,
   upsertAdminService,
   moderateAdminReview,
-  verifyAdminRazorpayTestPayment,
+  verifyAdminRazorpayLivePayment,
   type AdminSnapshot,
 } from "../lib/studioApi";
 import { BRAND_NAME } from "../lib/brand";
@@ -63,9 +63,9 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
   const [serviceForm, setServiceForm] = useState({ code: "", name: "", description: "", basePrice: 99, printPrice: 0, category: "print", isActive: true, sortOrder: 10 });
   const [promoForm, setPromoForm] = useState({ code: "", description: "", discount: 10, maxUses: 100, validUntil: "", isActive: true });
   const [razorpayStatus, setRazorpayStatus] = useState<RazorpayAdminStatus | null>(null);
-  const [razorpayTestAmount, setRazorpayTestAmount] = useState("49");
-  const [razorpayTesting, setRazorpayTesting] = useState(false);
-  const [razorpayTestResult, setRazorpayTestResult] = useState("");
+  const [razorpayCheckAmount, setRazorpayCheckAmount] = useState("49");
+  const [razorpayChecking, setRazorpayChecking] = useState(false);
+  const [razorpayCheckResult, setRazorpayCheckResult] = useState("");
 
   const orders = useMemo(() => snapshot?.orders ?? [], [snapshot?.orders]);
   const services = useMemo(() => snapshot?.services ?? [], [snapshot?.services]);
@@ -144,17 +144,17 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
     }
   };
 
-  const handleRazorpayTestPayment = async () => {
-    const amount = Number(razorpayTestAmount);
+  const handleRazorpayLivePayment = async () => {
+    const amount = Number(razorpayCheckAmount);
     setError("");
-    setRazorpayTestResult("");
+    setRazorpayCheckResult("");
     if (!Number.isFinite(amount) || amount < 1) {
-      setError("Enter a Razorpay test amount of at least Rs. 1.");
+      setError("Enter a Razorpay amount of at least Rs. 1.");
       return;
     }
-    setRazorpayTesting(true);
+    setRazorpayChecking(true);
     try {
-      const checkout = await createAdminRazorpayTestCheckout(amount);
+      const checkout = await createAdminRazorpayLiveCheckout(amount);
       const paymentResponse = await openRazorpayCheckout({
         key: checkout.key_id,
         amountPaise: checkout.amount_paise,
@@ -167,16 +167,16 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
         customerPhone: checkout.customer_phone,
         billNumber: checkout.receipt,
       });
-      await verifyAdminRazorpayTestPayment({
+      await verifyAdminRazorpayLivePayment({
         providerOrderId: paymentResponse.razorpay_order_id,
         providerPaymentId: paymentResponse.razorpay_payment_id,
         providerSignature: paymentResponse.razorpay_signature,
       });
-      setRazorpayTestResult(`Verified Rs. ${(checkout.amount_paise / 100).toLocaleString("en-IN")} payment. Payment ID: ${paymentResponse.razorpay_payment_id}`);
+      setRazorpayCheckResult(`Verified Rs. ${(checkout.amount_paise / 100).toLocaleString("en-IN")} payment. Payment ID: ${paymentResponse.razorpay_payment_id}`);
     } catch (paymentError) {
-      setError((paymentError as Error).message || "Unable to complete Razorpay test payment.");
+      setError((paymentError as Error).message || "Unable to complete Razorpay payment check.");
     } finally {
-      setRazorpayTesting(false);
+      setRazorpayChecking(false);
     }
   };
 
@@ -268,10 +268,10 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
           <section className="mt-6 rounded-lg border border-stone-200 bg-white p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase text-[#8a5b12]">Razorpay testing</p>
+                <p className="text-xs font-bold uppercase text-[#8a5b12]">Razorpay live</p>
                 <h2 className="mt-1 text-xl font-black">Checkout configuration</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-                  This panel verifies server-side Razorpay environment variables without exposing the secret key to the browser.
+                  This panel checks the live Razorpay environment without exposing the secret key to the browser.
                 </p>
               </div>
               <button type="button" onClick={() => void loadRazorpayStatus()} className="inline-flex items-center justify-center gap-2 rounded-lg bg-stone-950 px-4 py-3 text-sm font-black text-white">
@@ -286,19 +286,12 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
               <Info label="Secret" value={razorpayStatus?.secret_configured ? "Configured server-side" : razorpayStatus ? "Missing" : "Not checked"} />
             </div>
 
-            <div className="mt-5 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
-              <p className="font-black">Test checkout credentials</p>
-              <p className="mt-2">Use Razorpay test mode cards/UPI in the checkout popup.</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <Info label="Test card" value="4111 1111 1111 1111" />
-                <Info label="Expiry / CVV" value="Any future date / any CVV" />
-                <Info label="Test UPI" value="success@razorpay" />
-              </div>
-            </div>
-
             <div className="mt-5 rounded-lg border border-stone-200 bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase text-[#8a5b12]">Real checkout test</p>
-              <h3 className="mt-1 text-lg font-black">Enter any amount and open Razorpay</h3>
+              <p className="text-xs font-bold uppercase text-[#8a5b12]">Live checkout check</p>
+              <h3 className="mt-1 text-lg font-black">Open Razorpay with a real amount</h3>
+              <p className="mt-2 text-sm leading-6 text-stone-600">
+                This uses live Razorpay credentials. Only complete the popup when you want to record a real payment.
+              </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,240px),auto] sm:items-end">
                 <label className="block">
                   <span className="text-xs font-bold uppercase text-stone-500">Amount in Rs.</span>
@@ -306,23 +299,23 @@ export default function AdminOperationsPage({ navigate }: AdminOperationsPagePro
                     type="number"
                     min="1"
                     step="0.01"
-                    value={razorpayTestAmount}
-                    onChange={(event) => setRazorpayTestAmount(event.target.value)}
+                    value={razorpayCheckAmount}
+                    onChange={(event) => setRazorpayCheckAmount(event.target.value)}
                     className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm font-black outline-none"
                   />
                 </label>
                 <button
                   type="button"
-                  disabled={razorpayTesting}
-                  onClick={() => void handleRazorpayTestPayment()}
+                  disabled={razorpayChecking}
+                  onClick={() => void handleRazorpayLivePayment()}
                   className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-lg bg-[#f1c75b] px-4 py-3 text-sm font-black text-stone-950 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <CreditCard size={16} /> {razorpayTesting ? "Opening Razorpay..." : "Pay test amount"}
+                  <CreditCard size={16} /> {razorpayChecking ? "Opening Razorpay..." : "Open live checkout"}
                 </button>
               </div>
-              {razorpayTestResult && (
+              {razorpayCheckResult && (
                 <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
-                  {razorpayTestResult}
+                  {razorpayCheckResult}
                 </div>
               )}
             </div>

@@ -18,10 +18,22 @@ export type AdminSnapshot = {
 
 export type RazorpayAdminStatus = {
   configured: boolean;
-  mode: "test" | "live" | "unknown";
+  mode: "live" | "unknown";
   key_id_masked: string;
   key_id_prefix: string;
   secret_configured: boolean;
+};
+
+export type AdminRazorpayLiveCheckout = {
+  provider_order_id: string;
+  key_id: string;
+  amount_paise: number;
+  currency: string;
+  receipt: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  description: string;
 };
 
 export type PromoPreview = {
@@ -82,6 +94,10 @@ export const submitReview = (input: Record<string, unknown>) => studioApi<Review
 
 export const loadAdminSnapshot = () => studioApi<AdminSnapshot>({ action: "admin.snapshot" }, true);
 export const getAdminRazorpayStatus = () => studioApi<RazorpayAdminStatus>({ action: "admin.razorpayStatus" }, true);
+export const createAdminRazorpayLiveCheckout = (amount: number) =>
+  studioApi<AdminRazorpayLiveCheckout>({ action: "admin.createRazorpayLiveCheckout", amount }, true);
+export const verifyAdminRazorpayLivePayment = (input: Record<string, unknown>) =>
+  studioApi<{ ok: boolean; provider_order_id: string; provider_payment_id: string }>({ action: "admin.verifyRazorpayLivePayment", ...input }, true);
 export const updateAdminOrder = (input: Record<string, unknown>) =>
   studioApi<Order>({ action: "admin.updateOrder", ...input }, true);
 export const upsertAdminService = (input: Record<string, unknown>) =>

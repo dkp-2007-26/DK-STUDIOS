@@ -687,16 +687,16 @@ async function verifyRazorpayPayment(supabase, body) {
   return { ok: true, order_id: order.id, provider_order_id: providerOrderId, provider_payment_id: providerPaymentId };
 }
 
-async function createAdminRazorpayTestCheckout(body, appUser) {
-  const amountPaise = normalizeRazorpayAmountPaise(body.amount, "Razorpay test amount");
-  const receipt = `ADMIN-TEST-${Date.now()}`.slice(0, 40);
+async function createAdminRazorpayLiveCheckout(body, appUser) {
+  const amountPaise = normalizeRazorpayAmountPaise(body.amount, "Razorpay production check amount");
+  const receipt = `ADMIN-LIVE-${Date.now()}`.slice(0, 40);
   const checkout = await createRazorpayOrder({
     amountPaise,
     receipt,
-    errorPrefix: "Razorpay test order creation failed",
+    errorPrefix: "Razorpay production order creation failed",
     notes: {
       account: "DK STUDIOS",
-      purpose: "admin_payment_gateway_test",
+      purpose: "admin_payment_gateway_check",
       admin_user_id: appUser.id,
       admin_email: appUser.email,
     },
@@ -711,11 +711,11 @@ async function createAdminRazorpayTestCheckout(body, appUser) {
     customer_name: "DK STUDIOS Admin",
     customer_email: appUser.email,
     customer_phone: null,
-    description: `Admin gateway test - Rs. ${(amountPaise / 100).toFixed(2)}`,
+    description: `Admin gateway check - Rs. ${(amountPaise / 100).toFixed(2)}`,
   };
 }
 
-async function verifyAdminRazorpayTestPayment(body) {
+async function verifyAdminRazorpayLivePayment(body) {
   const { keySecret } = requireRazorpayEnv();
   const { providerOrderId, providerPaymentId, providerSignature } = requireRazorpayPaymentFields(body, [
     "providerOrderId",
@@ -724,7 +724,7 @@ async function verifyAdminRazorpayTestPayment(body) {
   ]);
   const expected = createRazorpayPaymentSignature(providerOrderId, providerPaymentId, keySecret);
   if (!timingSafeEqualHex(expected, providerSignature)) {
-    throw new SupabaseServerError("Razorpay test payment signature verification failed.", 400);
+    throw new SupabaseServerError("Razorpay payment signature verification failed.", 400);
   }
   return {
     ok: true,
@@ -946,8 +946,8 @@ export default async (request) => {
       const { appUser } = await requireRole(token, ["admin"]);
       if (action === "admin.snapshot") return json(await adminSnapshot(supabase));
       if (action === "admin.razorpayStatus") return json(getRazorpayStatus());
-      if (action === "admin.createRazorpayTestCheckout") return json(await createAdminRazorpayTestCheckout(body, appUser));
-      if (action === "admin.verifyRazorpayTestPayment") return json(await verifyAdminRazorpayTestPayment(body));
+      if (action === "admin.createRazorpayLiveCheckout") return json(await createAdminRazorpayLiveCheckout(body, appUser));
+      if (action === "admin.verifyRazorpayLivePayment") return json(await verifyAdminRazorpayLivePayment(body));
       if (action === "admin.updateOrder") return json(await updateOrder(supabase, body));
       if (action === "admin.upsertService") return json(await upsertService(supabase, body));
       if (action === "admin.upsertPromotion") return json(await upsertPromotion(supabase, body));

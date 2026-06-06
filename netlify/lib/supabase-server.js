@@ -91,7 +91,7 @@ export function requireRazorpayEnv() {
 export function getRazorpayStatus() {
   const keyId = readEnv("RAZORPAY_KEY_ID");
   const keySecret = readEnv("RAZORPAY_KEY_SECRET");
-  const mode = keyId.startsWith("rzp_test_") ? "test" : keyId.startsWith("rzp_live_") ? "live" : "unknown";
+  const mode = keyId.startsWith("rzp_live_") ? "live" : "unknown";
   const maskedKeyId = keyId ? `${keyId.slice(0, 9)}...${keyId.slice(-4)}` : "";
   return {
     configured: Boolean(keyId && keySecret),
